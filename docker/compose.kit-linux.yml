@@ -1,0 +1,6 @@
+# Native Linux gateway-to-host route. The API binds this Docker interface
+# and loopback, never all LAN interfaces. Windows keeps its Desktop routing.
+services:
+  app:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

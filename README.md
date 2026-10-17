@@ -4,7 +4,7 @@ Clone this repository to run your own AnythingMCP and Codebound host. Create you
 
 ## Start your own host
 
-Install Python 3.11+ and Docker with its Linux engine and Compose v2. Git is needed to clone the repository. Start Docker before launching. Windows, Linux and macOS use the same Python entry point; only Windows has been exercised end to end so far. Published AnythingMCP uses amd64; Docker Desktop can emulate it on ARM.
+Install Python 3.11+ and Docker with its Linux engine and Compose 2.24.4+. Git is needed to clone the repository. Start Docker before launching. Windows and Linux have native host/demo launchers; see [Linux setup](docs/linux.md) for prerequisites, Docker routing and Claude JSON. macOS uses the portable host path. Published AnythingMCP uses amd64; Docker Desktop can emulate it on ARM.
 
 ```sh
 git clone --depth 1 --branch dev_sanchit https://github.com/Kunaalkk1/BFH_Codebound.git
@@ -99,15 +99,15 @@ To automatically back up and merge the generated entry into Claude Desktop:
 python configure_claude.py --install
 ```
 
-This explicit option preserves other MCP servers and preferences and refuses a conflicting entry. It detects standard Windows, Windows Store/MSIX and macOS config locations; use `--config /path/to/claude_desktop_config.json` for another installation. Save your work and quit/reopen Claude Desktop yourself afterwards. The helper never closes Claude. Use `--name another-profile` for another account/server, or `--rotate` to explicitly replace a saved key snapshot after rotating the key in AnythingMCP.
+This explicit option preserves other MCP servers and preferences and refuses a conflicting entry. It detects standard Windows, Windows Store/MSIX, macOS and Linux/XDG config locations; use `--config /path/to/claude_desktop_config.json` for another installation. Save your work and quit/reopen Claude Desktop yourself afterwards. The helper never closes Claude. Use `--name another-profile` for another account/server, or `--rotate` to explicitly replace a saved key snapshot after rotating the key in AnythingMCP.
 
 On Windows, keys are encrypted with current-user DPAPI. On macOS/Linux they are stored in a private file with mode 600 and a mode-700 parent directory. Do not share the credential files or reuse another machine's generated JSON. Automation may supply `CODEBOUND_MCP_KEY` in the environment; no key is accepted as a command-line argument.
 
-This bridge exposes the tools visible to your own key on the selected AnythingMCP server. Codebound host saved-script operations remain available through its browser UI and HTTP API; the bridge does not automatically publish those operations as MCP tools. The separate Alice demo bridge is unchanged.
+This bridge exposes the tools visible to your own key on the selected AnythingMCP server. Codebound host saved-script operations remain available through its browser UI and HTTP API; the bridge does not automatically publish those operations as MCP tools. Use `python configure_claude.py --demo` to generate a portable profile for the five reviewed demo tools. The legacy Windows Alice bridge is also retained.
 
 ## Explicit hackathon demo
 
-The official Codebound Kit is a separate environment with synthetic Alice/Bob/Carol users, mock services, reference workflows and benchmark fixtures. Only explicit demo setup creates those identities. Its Windows launcher, dependency fetching, Claude bridge and acceptance instructions are in [the demo guide](docs/hackathon-demo.md).
+The official Codebound Kit is a separate environment with synthetic Alice/Bob/Carol users, mock services, reference workflows and benchmark fixtures. Only explicit demo setup creates those identities. Its Windows setup, dependency fetching, Claude bridge and acceptance instructions are in [the demo guide](docs/hackathon-demo.md).
 
 ```sh
 python launch.py demo --setup
@@ -117,7 +117,7 @@ python launch.py demo --benchmark
 python launch.py demo --stop
 ```
 
-Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses ports 3100/4200/8001 and its own mock services and databases. Host uses 3200/4300/8002; both can coexist. Host mode has no dependency on fixture data, demo keys or DPAPI snapshots. The full official checker still reports optional Level 3 as unsupported.
+Linux uses the Python commands above; see [the Linux guide](docs/linux.md). Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses ports 3100/4200/8001 and its own mock services and databases. Host uses 3200/4300/8002; both can coexist. Host mode has no dependency on fixture data, demo keys or DPAPI snapshots. The full official checker still reports optional Level 3 as unsupported.
 
 For downloaded Windows ZIPs, prefer the Python demo commands above. They run the repository's PowerShell helpers with an execution policy scoped to their child process; persistent user and machine policy settings are unchanged. This avoids the unsigned-script error produced by Windows download-zone markings.
 

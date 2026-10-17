@@ -18,6 +18,8 @@ import mcp_types as types
 
 from host_credentials import load
 
+DEMO_TOOLS=frozenset({'price_drift_check','catalogue_total','stuck_orders','mock_supplier_list_offers','codebound_run_task'})
+
 
 @asynccontextmanager
 async def upstream(credential):
@@ -53,12 +55,18 @@ def failure(message):
     return types.CallToolResult(content=[types.TextContent(type='text', text=message)], is_error=True)
 
 
-def build_server(credential):
+def build_server(credential, *, demo=False):
+    async def visible(client):
+        tools=await catalog(client)
+        if demo:
+            if not DEMO_TOOLS <= tools.keys(): raise ValueError('Demo tools incomplete')
+            return {name:tools[name] for name in sorted(DEMO_TOOLS)}
+        return tools
     async def list_tools(ctx, params):
         try:
             with anyio.fail_after(50):
                 async with upstream(credential) as client:
-                    return types.ListToolsResult(tools=list((await catalog(client)).values()))
+                    return types.ListToolsResult(tools=list((await visible(client)).values()))
         except Exception:
             from mcp.shared.exceptions import MCPError
             raise MCPError(types.ErrorData(code=-32603,
@@ -70,7 +78,7 @@ def build_server(credential):
         try:
             with anyio.fail_after(50):
                 async with upstream(credential) as client:
-                    tools = await catalog(client)
+                    tools = await visible(client)
                     if params.name not in tools:
                         return failure('Tool not available for this account')
                     validator = Draft202012Validator(tools[params.name].input_schema, registry=Registry())
@@ -85,16 +93,17 @@ def build_server(credential):
         instructions='Tools from your configured AnythingMCP host. The gateway enforces this account and server permissions.')
 
 
-async def smoke(path):
+async def smoke(path, demo=False):
     args = StdioServerParameters(command=sys.executable,
-        args=['-u', __file__, '--credential', str(path)])
+        args=['-u', __file__, '--credential', str(path)]+(['--demo'] if demo else []))
     async with Client(args, mode='legacy', read_timeout_seconds=60, cache=None) as client:
         tools = (await client.list_tools()).tools
+        if demo: assert {tool.name for tool in tools}==DEMO_TOOLS
     print(f'PASS SDK stdio connection and authenticated host discovery ({len(tools)} tools).')
 
 
-async def serve(credential):
-    server = build_server(credential)
+async def serve(credential, demo=False):
+    server = build_server(credential,demo=demo)
     async with stdio_server() as (reader, writer):
         await server.run(reader, writer, server.create_initialization_options())
 
@@ -105,6 +114,7 @@ def main():
     parser.add_argument('--credential', required=True)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--smoke', action='store_true')
+    parser.add_argument('--demo', action='store_true')
     args = parser.parse_args()
     try:
         credential = load(args.credential)
@@ -115,9 +125,9 @@ def main():
                     print(f'Host MCP connection verified ({len(tools)} tools).')
             asyncio.run(check())
         elif args.smoke:
-            asyncio.run(smoke(args.credential))
+            asyncio.run(smoke(args.credential,args.demo))
         else:
-            asyncio.run(serve(credential))
+            asyncio.run(serve(credential,args.demo))
         return 0
     except KeyboardInterrupt:
         return 0

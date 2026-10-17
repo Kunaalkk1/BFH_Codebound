@@ -4,6 +4,7 @@ import hashlib
 from contextlib import contextmanager
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -24,6 +25,8 @@ OPENER = build_opener(ProxyHandler({}))
 @contextmanager
 def host_lock():
     LOCAL.mkdir(parents=True, exist_ok=True)
+    if os.name != 'nt':
+        os.chmod(LOCAL, 0o700)
     with (LOCAL / 'operation.lock').open('a+b') as handle:
         handle.seek(0, 2)
         if not handle.tell():
@@ -77,7 +80,9 @@ def dependencies():
     if sys.version_info < (3, 11):
         raise RuntimeError('Python 3.11+ is required')
     if not PYTHON.exists():
-        run([sys.executable, '-m', 'venv', ROOT / '.venv'])
+        try: run([sys.executable, '-m', 'venv', ROOT / '.venv'])
+        except subprocess.CalledProcessError:
+            raise RuntimeError('Could not create .venv. On Debian/Ubuntu install python3-venv; then retry with Python 3.11+.') from None
     check = subprocess.run([str(PYTHON), '-c', 'import fastapi, uvicorn, codebound.host.api'],
         cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if check.returncode:
@@ -106,7 +111,11 @@ def docker():
         raise RuntimeError('Install Docker Desktop (Linux engine) or Docker Engine + Compose v2.')
     result = subprocess.run([executable, 'info', '--format', '{{.OSType}}'], capture_output=True, text=True)
     if result.returncode or result.stdout.strip() != 'linux':
-        raise RuntimeError('Start Docker with its Linux engine, then retry.')
+        raise RuntimeError('Docker Linux engine is unavailable. Start Docker and verify current-user access with docker info.')
+    version=subprocess.run([executable,'compose','version','--short'],capture_output=True,text=True)
+    match=re.match(r'v?(\d+)\.(\d+)\.(\d+)',version.stdout.strip())
+    if version.returncode or not match or tuple(map(int,match.groups())) < (2,24,4):
+        raise RuntimeError('Install/update Docker Compose v2.24.4+ (docker compose plugin).')
     return executable
 
 
@@ -257,7 +266,8 @@ def host(args):
 
 def demo(args):
     if os.name != 'nt':
-        raise RuntimeError('The demo launcher requires Windows PowerShell; host mode is cross-platform.')
+        from demo_launch import main as native_demo
+        return native_demo(args)
     shell = shutil.which('powershell.exe')
     if not shell:
         raise RuntimeError('Windows PowerShell was not found on PATH.')

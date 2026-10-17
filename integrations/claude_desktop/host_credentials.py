@@ -14,23 +14,23 @@ class Credential:
     key: str = field(repr=False)
 
 
-def endpoint(value):
+def endpoint(value, *, allow_demo=False):
     if '://' not in value:
         value = 'http://127.0.0.1:4300/mcp/' + value
     parsed = urlsplit(value)
     if (parsed.scheme != 'http' or parsed.hostname not in {'localhost', '127.0.0.1'}
-            or parsed.port != 4300 or parsed.username or parsed.password or parsed.query or parsed.fragment
+            or parsed.port not in ({4200,4300} if allow_demo else {4300}) or parsed.username or parsed.password or parsed.query or parsed.fragment
             or not re.fullmatch(r'/mcp/[A-Za-z0-9_-]{1,128}', parsed.path)):
         raise ValueError('Use your local host MCP server ID or its http://localhost:4300/mcp/... URL')
-    return 'http://127.0.0.1:4300' + parsed.path
+    return 'http://127.0.0.1:'+str(parsed.port) + parsed.path
 
 
-def validate(value):
+def validate(value, *, allow_demo=False):
     if not isinstance(value, dict) or set(value) != {'endpoint', 'key'}:
         raise ValueError('Invalid host credential')
     if not isinstance(value['key'], str) or not re.fullmatch(r'mcp_[0-9a-f]{64}', value['key']):
         raise ValueError('Use a per-user AnythingMCP key beginning with mcp_')
-    return Credential(endpoint(value['endpoint']), value['key'])
+    return Credential(endpoint(value['endpoint'],allow_demo=allow_demo), value['key'])
 
 
 def encode(credential):
@@ -49,7 +49,7 @@ def load(path):
     if os.name == 'nt':
         import win32crypt
         raw = win32crypt.CryptUnprotectData(raw, None, None, None, 0)[1]
-    return validate(json.loads(raw))
+    return validate(json.loads(raw),allow_demo=True)
 
 
 def save(path, credential, *, rotate=False):

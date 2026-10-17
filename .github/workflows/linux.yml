@@ -1,0 +1,49 @@
+name: Linux compatibility
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pytest -q -m 'not docker'
+      - run: python launch.py --help && python configure_claude.py --help
+  docker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -e '.[dev]'
+      - run: docker build -t codebound-worker:host sandbox-worker
+      - run: python -m pytest tests/test_docker_integration.py -q
+        env:
+          CODEBOUND_TEST_DOCKER: '1'
+          CODEBOUND_DOCKER_TEST_IMAGE: codebound-worker:host
+  native-demo:
+    name: Native Linux demo (excluding inference)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install -e '.[dev]'
+      - run: python .github/tests/linux_demo_smoke.py

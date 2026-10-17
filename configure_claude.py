@@ -27,9 +27,9 @@ def no_duplicates(pairs):
     return result
 
 
-def snippet(name, python, credential):
+def snippet(name, python, credential, *, demo=False):
     return {'mcpServers': {name: {'command': str(python),
-        'args': ['-u', str(BRIDGE), '--credential', str(credential)]}}}
+        'args': ['-u', str(BRIDGE), '--credential', str(credential)]+(['--demo'] if demo else [])}}}
 
 
 def merge(path, entry):
@@ -78,6 +78,10 @@ def claude_config():
         return Path(os.environ['APPDATA']) / 'Claude/claude_desktop_config.json'
     if sys.platform == 'darwin':
         return Path.home() / 'Library/Application Support/Claude/claude_desktop_config.json'
+    if sys.platform.startswith('linux'):
+        base=Path(os.environ.get('XDG_CONFIG_HOME') or Path.home()/'.config')
+        if not base.is_absolute(): raise ValueError('XDG_CONFIG_HOME must be an absolute path')
+        return base/'Claude/claude_desktop_config.json'
     raise ValueError('Specify --config for your Claude Desktop installation on this platform')
 
 
@@ -98,11 +102,13 @@ def environment():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--server', help='Your MCP server ID, slug, or local :4300 MCP URL')
-    parser.add_argument('--name', default='codebound-host', help='Claude server entry name')
+    parser.add_argument('--name', help='Claude server entry name')
+    parser.add_argument('--demo', action='store_true', help='Use the explicit demo Alice identity and expose only its five reviewed tools')
     parser.add_argument('--install', action='store_true', help='Back up and merge into Claude Desktop configuration')
     parser.add_argument('--config', type=Path, help='Explicit Claude config path (used with --install)')
     parser.add_argument('--rotate', action='store_true', help='Replace this local credential snapshot with a new key')
     args = parser.parse_args()
+    args.name=args.name or ('codebound-kit-alpha' if args.demo else 'codebound-host')
     try:
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', args.name):
             raise ValueError('Use letters, digits, underscores or hyphens for --name')
@@ -113,24 +119,32 @@ def main():
         folder = ROOT / '.local/host/claude'
         folder.mkdir(parents=True, exist_ok=True)
         profile = folder / (args.name + ('.dpapi' if os.name == 'nt' else '.json'))
-        existing = load(profile) if profile.exists() and not args.rotate else None
-        target = endpoint(args.server or (existing.endpoint if existing else
-            input('Your AnythingMCP server ID or MCP URL: ').strip()))
-        key = os.environ.get('CODEBOUND_MCP_KEY') or (existing.key if existing else
-            getpass.getpass('Your per-user MCP API key (hidden): ').strip())
-        credential = validate({'endpoint': target, 'key': key})
+        if args.demo:
+            if args.server: raise ValueError('--demo selects the provisioned demo server; omit --server')
+            state_file=ROOT/'.local/kit/state/state.json'
+            if not state_file.exists(): raise ValueError('Run python3 launch.py demo --setup first')
+            state=json.loads(state_file.read_text(encoding='utf-8-sig'))
+            credential=validate({'endpoint':state['url']+'/mcp/'+state['workspaces']['A']['serverId'],
+                'key':state['users']['alice']['key']},allow_demo=True)
+        else:
+            existing = load(profile) if profile.exists() and not args.rotate else None
+            target = endpoint(args.server or (existing.endpoint if existing else
+                input('Your AnythingMCP server ID or MCP URL: ').strip()))
+            key = os.environ.get('CODEBOUND_MCP_KEY') or (existing.key if existing else
+                getpass.getpass('Your per-user MCP API key (hidden): ').strip())
+            credential = validate({'endpoint': target, 'key': key})
         # Verify a temporary snapshot before changing an existing profile.
         probe = folder / ('probe-' + uuid4().hex + profile.suffix)
         clean_env = dict(os.environ)
         clean_env.pop('CODEBOUND_MCP_KEY', None)
         try:
             save(probe, credential)
-            subprocess.run([str(PYTHON), str(BRIDGE), '--credential', str(probe), '--smoke'],
+            subprocess.run([str(PYTHON), str(BRIDGE), '--credential', str(probe), '--smoke']+(['--demo'] if args.demo else []),
                 check=True, env=clean_env)
         finally:
             probe.unlink(missing_ok=True)
         save(profile, credential, rotate=args.rotate)
-        entry = snippet(args.name, PYTHON, profile)
+        entry = snippet(args.name, PYTHON, profile,demo=args.demo)
         output = folder / (args.name + '-entry.json')
         output.write_text(json.dumps(entry, indent=2), encoding='utf-8')
         print('Claude JSON generated: ' + str(output))
@@ -142,7 +156,8 @@ def main():
             print('Save your work and quit/reopen Claude Desktop to load it.')
         else:
             print('Claude Desktop configuration unchanged. Run again with --install to merge automatically.')
-        print('This exposes tools assigned to your MCP server. Host saved-script APIs remain in the Codebound UI/HTTP API.')
+        print('Demo profile exposes the five reviewed kit tools.' if args.demo else
+            'This exposes tools assigned to your MCP server. Host saved-script APIs remain in the Codebound UI/HTTP API.')
         return 0
     except ValueError as exc:
         print('Claude setup failed: ' + str(exc), file=sys.stderr)

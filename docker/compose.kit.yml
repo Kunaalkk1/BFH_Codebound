@@ -1,7 +1,8 @@
 ﻿name: codebound-kit
 services:
   app:
-    image: helpcodeai/anythingmcp:latest
+    image: ${ANYTHINGMCP_IMAGE:-helpcodeai/anythingmcp:latest}
+    platform: linux/amd64
     container_name: codebound-kit-app
     ports:
       - "127.0.0.1:3100:3000"
