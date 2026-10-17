@@ -32,6 +32,8 @@ python launch.py --test
 
 Launch reuses healthy services. Stop preserves accounts, credentials, scripts and volumes. Worker source changes trigger a rebuild on the next launch. Existing secrets are never replaced; if a host volume exists but its configuration is missing, startup refuses and asks you to restore it. Windows wrappers `setup.ps1` and `launch.ps1` also default to host mode.
 
+If Docker reports the original AnythingMCP digest `af6c2cbc...` as `not found`, update `launch.py` and `dependencies.json` from this branch and launch again. The launcher repairs that known unavailable default image reference, backs up `compose.env` and preserves all secrets. Operator-selected image references are left unchanged. Python/pip reinstallation does not resolve a Docker registry `not found` error.
+
 ## Your data and identity
 
 | Host component | Address / storage |
