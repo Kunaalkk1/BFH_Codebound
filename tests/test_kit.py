@@ -41,5 +41,7 @@ def test_programs_parse_without_loading_expected_data():
 
 
 def test_kit_fixture_checkout_is_unmodified():
+    if not (ROOT/'external/codebound-kit/.git').exists():
+        pytest.skip('Official fixtures are installed only for explicit demo mode')
     result=subprocess.run(['git','-C',str(ROOT/'external/codebound-kit'),'status','--porcelain'],capture_output=True,text=True,check=True)
     assert result.stdout==''

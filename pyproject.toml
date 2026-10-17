@@ -15,6 +15,9 @@ dev = ["pytest>=8,<9", "httpx>=0.28,<1"]
 [tool.setuptools.packages.find]
 include = ["codebound*"]
 
+[tool.setuptools.package-data]
+"codebound.host" = ["index.html"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

@@ -1,165 +1,104 @@
-# Codebound Secure Sandbox for AnythingMCP
+# Codebound
 
-Codebound runs Python near business data and returns compact JSON to an AI agent. AnythingMCP handles authenticated MCP tools; local Ollama generates source; disposable Docker workers execute it. The demonstration now uses the **official Codebound hackathon kit**, rather than Railway ticket data.
+Clone this repository to run your own AnythingMCP and Codebound host. Create your own administrator, invite users, configure connectors and run saved Python scripts in restricted Docker workers. Host mode does not install the hackathon kit or create Alice, Bob or Carol.
 
-## Supported functionality
+## Start your own host
 
-- **Level 1:** a three-step Docker processor on the existing `mock_supplier_list_offers` tool: USD â†’ EUR, 19% VAT, whitespace normalization. Broken input fails with its `price_usd` path and no partial results.
-- **Level 2:** typed MCP tools `price_drift_check`, `catalogue_total`, and `stuck_orders`, with real pagination, supplier batching and mediated workspace tool calls.
-- Local Ollama generation and exact saved-script reuse through `codebound_run_task`; direct authenticated APIs for script creation, retrieval, execution, deletion and generation-based modification.
-- Workspace/user authorization, connector bindings, bounded calls, persistent script/audit storage and an SDK stdio bridge for Claude Desktop.
-- **Level 3 is not implemented:** no credentials are injected into scripts and no worker network access is enabled. `supplier_account` is absent.
+Install Python 3.11+ and Docker with its Linux engine and Compose v2. Git is needed to clone the repository. Start Docker before launching. Windows, Linux and macOS use the same Python entry point; only Windows has been exercised end to end so far. Published AnythingMCP uses amd64; Docker Desktop can emulate it on ARM.
 
-Compatibility assessment: the existing script store, Ollama client and Docker policy remain in use. The PostgreSQL-only broker was insufficient for the kit, so a trusted broker now mediates tool calls over stdin/stdout. The original Supplier tool keeps its identity and routes to an external Codebound processor endpoint; its response returns before the gateway's response mapping. This is a connector integration, not a native AnythingMCP sandbox extension. Upstream AnythingMCP and the official kit's fixture/checker files are unchanged.
+```sh
+git clone --depth 1 --branch dev_sanchit https://github.com/Kunaalkk1/BFH_Codebound.git
+cd BFH_Codebound
+python launch.py
+```
 
-## Architecture
+Use `python3` if that is your system's Python 3.11+ command. First launch creates the Python environment, installs missing backend dependencies, generates private host secrets, starts the database and pinned AnythingMCP image, builds the restricted worker and starts Codebound. Internet access is needed for initial downloads. No Node installation, official kit, model download or Claude configuration is required for host startup.
 
-Source: [docs/architecture.mmd](docs/architecture.mmd).
+1. Open **http://localhost:3200/login** and create an account with your own name, email and password. The first account becomes administrator. The launcher does not create an administrator.
+2. Configure your connectors and MCP servers in AnythingMCP. Administrators invite additional users through user management. With no SMTP, share the invitation link manually.
+3. Open **http://127.0.0.1:8002**, sign in with the same account, select your MCP server and inspect its available tools.
+4. Save a script, specify its allowed tool names and run it with JSON parameters. An empty binding list permits pure Python processing. Load a saved script to review or edit its source.
+
+AnythingMCP may show email verification and edition setup during first sign-in. Its self-hosted flow offers **Skip for now** when email is unavailable. Choose the edition appropriate to your use; this repository preserves upstream licensing behavior.
+
+First signup is enabled on an empty database. Subsequent signup is invitation-only by default. To deliberately enable additional self-registration, set `ALLOW_OPEN_REGISTRATION=true` in your private `.local/host/compose.env` and relaunch. Host mode never imports demo accounts or credentials.
+
+```sh
+python launch.py --status
+python launch.py --stop
+python launch.py --dependencies-only
+python launch.py --test
+```
+
+Launch reuses healthy services. Stop preserves accounts, credentials, scripts and volumes. Worker source changes trigger a rebuild on the next launch. Existing secrets are never replaced; if a host volume exists but its configuration is missing, startup refuses and asks you to restore it. Windows wrappers `setup.ps1` and `launch.ps1` also default to host mode.
+
+## Your data and identity
+
+| Host component | Address / storage |
+|---|---|
+| AnythingMCP dashboard | http://localhost:3200 |
+| AnythingMCP API / MCP | http://127.0.0.1:4300 |
+| Codebound UI / API reference | http://127.0.0.1:8002 and `/docs` |
+| Users and connectors | `codebound-host_host_postgres_data` Docker volume |
+| Host secrets and pinned image | `.local/host/compose.env` |
+| Host scripts and execution audit | `.local/host/codebound.sqlite3` |
+| Managed API logs | `.local/host/backend.out.log`, `.local/host/backend.err.log` |
+
+Back up the database volume, host SQLite database and `compose.env` together. Losing `ENCRYPTION_KEY` prevents decryption of stored connector credentials. `.local`, virtual environments, downloaded repositories and generated results are ignored by Git. Each host generates its own secrets. Kit/demo installations and their volumes remain separate.
+
+Codebound validates the caller's live AnythingMCP session on each authenticated request. Scripts belong to the real user ID and organization ID. The broker forwards that same session to the selected MCP server and intersects saved tool bindings with the tools visible to that user. AnythingMCP authorizes each actual tool call. Administrators and editors can create scripts; users can access their own scripts only. Session revocation and permission changes apply on subsequent requests.
 
 ```mermaid
-flowchart TB
-    User <-->|Compact answers| Claude[Claude Desktop]
-    Claude <-->|MCP stdio| Bridge[Python bridge - protected Alice key]
-    Bridge <-->|Authenticated MCP HTTP :4200| Gateway[AnythingMCP - isolated kit database\nWorkspace A / B and user roles]
-    Gateway -->|Published script tools / existing Supplier offer tool| API[Codebound FastAPI :8001]
-    API <--> Registry[(SQLite scripts, versions and audit\nExisting database preserved)]
-    Ollama[Local Ollama] -->|Python source text only| Registry
-    API -->|Task / code template - no business rows| Ollama
-    API -->|Source, parameters, authorized responses| Worker[Restricted Docker Python worker\nnetwork none - no host mounts - no credentials]
-    Worker -->|tools.call via bounded stdin/stdout IPC| Broker[Trusted broker\nWorkspace + user + connector binding\n64-call quota / byte and time limits]
-    Broker <-->|Same user's authenticated workspace MCP| Gateway
-    Gateway <-->|Connector-authenticated requests| ERP[Mock ERP :4101 - host :14101]
-    Gateway <-->|Connector-authenticated requests| Supplier[Mock Supplier :4102 - host :14102]
-    Gateway <-->|Connector-authenticated requests| Carrier[Mock Carrier :4103 - host :14103]
-    Gateway <-->|A only - authorized roles| Payroll[Mock Payroll :4104 - host :14104]
-    Worker -->|Compact JSON| API
-    API -->|Processed result before gateway response mapping| Gateway
-    Logs[Official request logs - host :14180 / :14181] --- ERP
-    Outside[Outside security target :4199 - host :14199\nNever reachable by worker]:::blocked
-    classDef blocked fill:#fee,stroke:#b22
+flowchart LR
+    User[Your account] --> Gateway[AnythingMCP :3200 / :4300]
+    User --> UI[Codebound :8002]
+    UI -->|Caller session| API[Host script API]
+    API --> Store[(Host SQLite)]
+    API --> Worker[Docker worker - network none]
+    Worker -->|Bounded tool call IPC| Broker[Trusted broker]
+    Broker -->|Same user session| Gateway
+    Gateway --> Connectors[Your authorized connectors]
 ```
 
-## Environment and identities
+## Scripts and optional generation
 
-| Service | Host loopback port (official internal port) |
-|---|---:|
-| Isolated AnythingMCP dashboard / MCP API | 3100 / 4200 |
-| Codebound kit API / Swagger | 8001 |
-| Mock ERP / Supplier / Carrier / Payroll | 14101 / 14102 / 14103 / 14104 (4101?4104) |
-| Official mock / outside request logs | 14180 / 14181 (4180 / 4181) |
-| Outside-host security target | 14199 (4199) |
-| Native Ollama | 11434 |
+The worker provides `parameters` and `tools.call(name, arguments)`. Print one compact JSON object. Standard-library Python is available; submitted source executes inside the Docker worker.
 
-Workspace **A / Alpha** has ERP, Supplier, Carrier and Payroll. **Alice** is its ADMIN; **Carol** is its VIEWER with the Staff role and no Payroll permission. Workspace **B / Beta** has ERP, Supplier and Carrier; **Bob** is its ADMIN. All identities and mock credentials were freshly generated by the official setup. The new environment uses a separate `codebound-kit` Compose project and PostgreSQL volume; it never runs setup against the existing `amcp` database. Mocks have their own `codebound-kit-mocks` project, network and persisted `/data` directory. Standard host ports were already used by another mock installation, so our Compose overlay publishes distinct host ports while preserving the official internal ports, services and fixtures. Checker wrappers set `CODEBOUND_MOCKS_ADMIN` and `CODEBOUND_OUTSIDE_ADMIN` accordingly. No other mock installation is reconfigured.
-
-## Requirements and setup
-
-Windows PowerShell 5.1+, Python 3.11+ (verified 3.13.7), Docker Desktop with Linux/WSL 2 and Compose 2.24.4+, Node 20+ (verified 24.20.0), native Ollama and the configured local model (`qwen2.5-coder:3b`). Claude Desktop is needed for the interactive demo.
-
-For an already provisioned checkout, launch with one command:
-
-```powershell
-.\launch.ps1
-.\launch.ps1 -Status
-.\launch.ps1 -Stop
-.\launch.ps1 -Test
-.\launch.ps1 -Benchmark
+```python
+import json
+print(json.dumps({"total": sum(parameters["amounts"])}))
 ```
 
-Launch reuses healthy services and verifies mocks, workspace discovery, the restricted worker, the model and the kit bridge credential. Stop gracefully shuts down the managed kit API, its isolated AnythingMCP/PostgreSQL containers and its dedicated mocks. It retains all databases/volumes/images and leaves other mock installations, the original `amcp` installation, Ollama and Claude intact.
+For connector calls, select your MCP server and include the exact discovered tool name in the script's allowed bindings:
 
-For a new Windows checkout, install the prerequisites above and start Docker Desktop and Ollama. Then run:
-
-```powershell
-git clone https://github.com/Kunaalkk1/BFH_Codebound.git
-cd BFH_Codebound
-git switch dev_sanchit
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
-.\launch.ps1
+```python
+import json
+response = tools.call("your_inventory_tool", {})
+print(json.dumps({"result": response}))
 ```
 
-`setup.ps1` downloads the official kit at the tested commit in `dependencies.json`, creates both Python environments, installs backend/test/bridge dependencies (including Windows DPAPI), pulls the local model, provisions fresh isolated services and prepares a credential for this Windows user. It preserves existing state and does not change Claude Desktop configuration. For download/install only, use `.\setup.ps1 -DependenciesOnly`. For an existing clone, first run `git pull --ff-only origin dev_sanchit`. The launcher and setup currently support Windows; Linux/macOS need a separate launcher and credential integration.
+Local Ollama generation is optional. Install/start native Ollama, pull a model such as `qwen2.5-coder:3b`, set `OLLAMA_MODEL` before launching (or store `{"model":"qwen2.5-coder:3b"}` in `.local/ollama.json`) and use the generation form. Stop and relaunch the API to pick up changed environment settings. Generation uses authorized tool schemas and saves source for review; it does not execute the generated program automatically. Generated programs can fail and should be reviewed. There is no cloud model fallback.
 
-The official kit is fetched automatically into `external/codebound-kit`; it is not included in the parent repository. GitHub access is required during setup. The AnythingMCP source submodule is optional for this Docker-image-based demo; to also download that source, run `git submodule update --init anythingmcp`. Never copy another machine's `.local` directory, database, virtual environments or DPAPI credentials.
+API clients sign in with `POST /session/login` and use the returned bearer session for `/v1/me`, `/v1/servers`, `/v1/tools/{server_id}`, `/v1/scripts` and `/v1/generate`. Scripts support retrieval, version-checked updates, deletion and `/v1/scripts/{id}/execute`. See `/docs` for schemas. Current host integration is the browser UI and authenticated HTTP API; the existing Claude bridge is specific to demo mode.
 
-If setup fails, it prints the failing script location and saves a transcript to `.local/setup-<timestamp>.log`. Missing repository files are reported with their full path. Share the final error lines when requesting help; keep the complete log private. An empty `external/codebound-kit` directory is downloaded automatically.
+## Explicit hackathon demo
 
-The model setting may instead be stored privately in `.local/ollama.json`. Backend dependencies are FastAPI/Uvicorn, with pytest/httpx for tests. The separate bridge environment uses its pinned MCP SDK and Windows DPAPI packages. The official kit has no npm dependencies.
+The official Codebound Kit is a separate environment with synthetic Alice/Bob/Carol users, mock services, reference workflows and benchmark fixtures. Only explicit demo setup creates those identities. Its Windows launcher, dependency fetching, Claude bridge and acceptance instructions are in [the demo guide](docs/hackathon-demo.md).
 
-`setup-kit.ps1` uses the official mock Compose file, the official AnythingMCP network override, small local isolation/port overlays and the unmodified official setup function. It checks for an empty isolated database and refuses to overwrite another mock setup's credentials. Registration adds the processor routing, raw processor-input tool and Codebound script connector only to the newly created workspace servers. Setup never runs a database reset or `down -v`.
-
-Secrets, state and backups live under ignored `.local/kit` and `.local/migration-backups`. Official source is a separate ignored Git checkout; legal files, expected data and tests remain there unchanged. Never publish the state, dumps, credential snapshots or raw logs.
-
-## Claude Desktop demo
-
-The `codebound-kit-alpha` server uses a separate current-user DPAPI credential and exposes only five tools: the three reference scripts, processed Supplier offers and `codebound_run_task`. Raw input tools and Payroll are hidden by the bridge.
-
-For first-time bridge setup, explicitly prepare and review the new entry:
-
-```powershell
-.\.venv-claude\Scripts\python.exe integrations/claude_desktop/kit_bridge.py --prepare
-.\launch\configure-kit-claude.ps1 -Preview
-.\launch\configure-kit-claude.ps1
-.\.venv-claude\Scripts\python.exe integrations/claude_desktop/kit_bridge.py --smoke
+```sh
+python launch.py demo --setup
+python launch.py demo
+python launch.py demo --status
+python launch.py demo --benchmark
+python launch.py demo --stop
 ```
 
-The helper adds only `codebound-kit-alpha`, backs up existing config and preserves other servers/preferences. It detects Claude's MSIX redirected config path. Preparation refuses to replace an existing protected kit credential. Normal launch never rewrites Claude configuration or closes the application.
+Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses ports 3100/4200/8001 and its own mock services and databases. Host uses 3200/4300/8002; both can coexist. Host mode has no dependency on fixture data, demo keys or DPAPI snapshots. The full official checker still reports optional Level 3 as unsupported.
 
-Save your work and quit/reopen Claude yourself after configuration. Enable the new server, then ask:
+## Verification and deployment scope
 
-> Use codebound-kit-alpha. Call price_drift_check with threshold 5. Return the qualifying rows, highest drift first. Do not fetch raw ERP or Supplier records into the conversation.
+The default test suite covers authentication, script ownership, workspace isolation, version conflicts, sandbox policy and existing demo logic. Live tests are opt-in: `CODEBOUND_TEST_HOST=1` runs `tests/test_host_live.py` against an empty disposable gateway on port 4300 and real Docker. Those tests deliberately create accounts and refuse a populated instance; do not enable them against a working host. Ordinary tests do not create users.
 
-Expect four qualifying articles. Try `catalogue_total(category="legacy")` to see `total=200, complete=false`, or `stuck_orders(days=7, as_of="2026-10-16T12:00:00.000Z")` for two orders. For Ollama generation, call `codebound_run_task` with a price-drift task, `threshold=5`, `fresh=false`, then repeat the identical arguments to demonstrate reuse. A matching saved script may already exist.
+Workers retain a read-only root, no host mounts or credentials, network `none`, an unprivileged user, dropped capabilities, no-new-privileges, seccomp and CPU/memory/PID limits. Brokered execution allows at most 64 calls, 2 MiB input, 16 KiB output and two concurrent runs per organization. The worker deadline is 15 seconds. Credentials and network access remain in the trusted host process.
 
-SDK smoke checks verify a real stdio â†’ AnythingMCP â†’ Docker invocation; they do not verify a new tool-call card inside the Claude application.
-
-## Acceptance and security tests
-
-Run live checks sequentially, without benchmarks or other demonstrations:
-
-```powershell
-.\launch.ps1 -Test                         # default regression suite
-.\launch\test.ps1 -Docker                 # existing restrictions against kit worker image
-.\launch\test.ps1 -Mcp                    # official MUST checks
-.\launch\test.ps1 -Ollama                 # real generation/reuse and role checks
-.\launch\kit.ps1 -Operation Check         # full unmodified official checker
-.\launch\kit.ps1 -Operation Security      # our implementations of A1-A13
-```
-
-The full checker reports P1â€“P2 and F1â€“F4, credential scans S1â€“S3, and missing F5. Its exit code is nonzero while optional F5 is absent; use the MUST command for mandatory-only acceptance. The attack cards are run separately against our script API, not automatically by the official checker. Each card executes an ERP nonce through a real worker, and the report records the nonce and script identity. Disposable attack scripts are deleted afterwards; their audits remain.
-
-Reports are in `.local/kit/official-report.json`, `.local/kit/attack-report.json` and pytest XML files. Additional exact comparisons are runnable with `.venv\Scripts\python.exe -m codebound.kit.validate`, with results in `.local/kit/exact-results-report.json`. The checker scans actual gateway logs and the isolated PostgreSQL database; additional verification checks Codebound logs and SQLite. No expected result files are loaded by runtime programs.
-
-## Benchmark
-
-```powershell
-.\benchmark.ps1
-.\benchmark.ps1 -Fresh
-.\benchmark.ps1 -Samples 5
-```
-
-The benchmark runs `price_drift_check(threshold=5)` three ways: raw MCP pagination/batching plus local aggregation; first Codebound execution; exact saved-script reuse. `-Fresh` gives the task a unique label, generates a new script and retains it. Expected kit output is used only as an assertion. Every workflow makes real mock requests. No cloud inference occurs.
-
-Results and individual samples are saved to ignored `benchmarks/results/latest.json`. The table reports medians for repeated raw/reuse samples; the first run has one sample. It distinguishes captured MCP HTTP body bytes, canonical tool-payload bytes, compact result bytes, caller MCP calls, observed broker/mock calls, completed Codebound requests, Docker runs and actual Ollama prompt/evaluation counts. **Claude tokens: Not directly measurable.** HTTP headers, bridge framing, gateway retries and internal SQL counts are not claimed as measured.
-
-Caller initialization and readiness/warm-up are outside timed work. Broker initialization, execution and cleanup are included in Codebound latency. The caller sees fewer calls and much smaller responses; the ERP/Supplier workload remains the same, and Docker/generation can make total latency higher. The first run is labelled according to actual generation or reuse, never presumed fresh.
-
-## Security and limits
-
-Worker policy is preserved: network `none`, UID/GID 10001, read-only root, no host mounts, all capabilities dropped, no-new-privileges, builtin seccomp, private namespaces, 128 MiB RAM without extra swap, 0.5 CPU, 16 PIDs and size-limited scratch/output. Only the broker protocol changed; source never executes on the Windows host. Ollama returns text and never executes it.
-
-The trusted broker resolves authenticated identity from fresh server-side credentials, resolves tool IDs within that workspace, intersects connector bindings with the caller's visible tools and rechecks every dispatched tool name. Workers receive neither MCP keys nor connector credentials. A run has at most 64 tool calls, 2 MiB of broker response data, a 16 KiB final output cap and two concurrent runs per workspace. Brokered scripts have a declared 15-second worker deadline to allow the 60 Carrier lookups required by the official dataset; the original compatibility runtime retains its existing defaults. Independent helper cleanup and outer deadlines remain in place.
-
-Direct script API calls use Alice/Carol/Bob's own upstream MCP key, so Carol's Payroll restriction is enforced inside the broker. Published fixed script tools are explicit workspace service capabilities with immutable server-owned connector bindings; AnythingMCP controls who may invoke them. The REST connector does not forward end-user identity. Thus a published invocation is audited under its workspace service identity, not delegated as the original caller. No published capability is bound to Payroll. Keep this limitation explicit when extending bindings or roles.
-
-Credentials are omitted from worker input; known kit credentials are masked from outputs and source persistence. Codebound audits refusals/executions using sanitized status and metrics, without source, arguments, raw rows or credentials. AnythingMCP retains its normal tool invocation history, including synthetic intermediate payloads; this integration does not redact business rows from gateway history. The bridge runtime reads only its Alice DPAPI snapshot. `.local` is ignored by Git, not an encrypted vault; protect OS/workspace access. Level 3 remains unsupported rather than enabling worker networking.
-
-## Migration, troubleshooting and limitations
-
-The active Railway CSV and benchmark were removed. Required historical generator/import/sample code was moved into compatibility fixtures so existing security regressions remain runnable. Five confirmed Railway scripts and twenty obsolete AI metadata records were removed transactionally; unrelated scripts and all audits remain. `Codebound PostgreSQL A/B` and the now-unused `Codebound local A/B` REST connectors were disabled and detached, with their old MCP servers/keys retired. Their 30 tools were disabled while invocation records were preserved. Their records and the old demonstration database remain inactive for recovery because connector hard deletion would cascade into invocation history. Backups and exact counts are in `.local/kit/*retirement-inventory.json`.
-
-The original `amcp` PostgreSQL service/volume remains intact. The old managed Railway API was stopped after official acceptance; old bridge configuration is retained for rollback. Use `codebound-kit-alpha` for the current demo.
-
-For failures, start with `launch.ps1 -Status`, `.local/kit/backend.err.log`, and the official request logs. Missing local model/image fails explicitly; no cloud or mock fallback occurs. Invalid generated Python is rejected and never executed. Generation implements the typed price-drift workflow; task text identifies reuse and does not select arbitrary capabilities. It uses a complete reviewed pagination/batching template as schema-only context; generated code remains untrusted and benchmark results are independently verified. Modification may return a source-unchanged or version-conflict error. Reload only the managed API with `launch/kit.ps1 -Operation Reload` after changing model/server configuration.
-
-This is hackathon isolation with a shared Docker Linux kernel and a trusted helper holding broad daemon authority. There is no microVM boundary, durable orphan reaper, distributed quota, production identity certification or tamper-proof audit. Host/daemon failure can interrupt cleanup. Local OS users and native Ollama are trusted. Arbitrary script API support is Python only; general model-generated workflows beyond the bound price-drift template and Level 3 secret-enabled networking are not implemented. Claude is an external AI host and sees the selected tool inputs/results.
+The supplied host binds to loopback for use on each person's own machine. It does not configure public hosting, TLS, SMTP, firewall rules or remote browser origins. A shared network deployment needs those settings, backups and an appropriate reverse proxy; changing a bind address alone is insufficient. Docker workers share the host kernel, and Docker daemon access remains privileged infrastructure authority.

@@ -1,17 +1,12 @@
 """Trusted mediated tool calls; credentials and networking never enter the worker."""
-from dataclasses import asdict
 import json
 import re
-import subprocess
-import sys
-from time import perf_counter, monotonic
+from time import monotonic
 
-from codebound.broker_protocol import exchange
 from codebound.connector_broker import tool_value
-from codebound.docker_executor import LocalDockerExecutor
 from codebound.mcp_client import McpClient
 from codebound.sandbox import SandboxSettings
-from codebound.kit.config import ROOT, state, config
+from codebound.kit.config import state, config
 
 SETTINGS=SandboxSettings(mode='local_docker',worker_image='codebound-worker:kit',timeout_seconds=15)
 
@@ -86,22 +81,5 @@ class Broker:
 
 
 def execute(source, parameters, broker, metrics):
-    # No caller can select the worker image, network, mounts or limits.
-    job={'settings':asdict(SETTINGS),'payload':{'source':source,'input':{'parameters':parameters},'timeout':SETTINGS.timeout_seconds,'output_limit':SETTINGS.max_result_bytes,'brokered':True}}
-    if len(json.dumps(job).encode())>SETTINGS.max_input_bytes: raise RuntimeError('INPUT_LIMIT_EXCEEDED')
-    started=perf_counter()
-    process=subprocess.Popen([sys.executable,'-m','codebound.docker_job'],cwd=ROOT,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,creationflags=subprocess.CREATE_NO_WINDOW if sys.platform=='win32' else 0)
-    try:
-        metrics['docker_attempts']=metrics.get('docker_attempts',0)+1
-        result=exchange(process,job,broker,timeout=25,output_limit=SETTINGS.max_result_bytes)
-        metrics['docker_executions']=metrics.get('docker_executions',0)+1
-        return json.loads(redact_text(json.dumps(result,allow_nan=False)))
-    finally:
-        metrics['docker_ms']=round((perf_counter()-started)*1000,3)
-        if process.stdin:
-            try: process.stdin.close()
-            except OSError: pass
-        # EOF lets the independent trusted helper clean up its exact container.
-        try: process.wait(timeout=20)
-        except subprocess.TimeoutExpired: raise RuntimeError('HELPER_CLEANUP_TIMEOUT')
-
+    from codebound.broker_runtime import execute as run
+    return run(source, parameters, broker, metrics, settings=SETTINGS, sanitize=redact_text)

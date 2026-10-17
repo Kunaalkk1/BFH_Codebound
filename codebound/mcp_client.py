@@ -22,7 +22,7 @@ class NoRedirect(HTTPRedirectHandler):
 def local_request(url, *, method="GET", body=None, headers=None, limit=2_000_000, timeout=45):
     parsed = urlsplit(url)
     if (parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"}
-            or parsed.port not in {4000, 4200} or parsed.username or parsed.password or parsed.fragment):
+            or parsed.port not in {4000, 4200, 4300} or parsed.username or parsed.password or parsed.fragment):
         raise IntegrationError("Only the configured local AnythingMCP API is allowed")
     request = Request(url, method=method, headers={"Content-Type": "application/json", **(headers or {})},
                       data=None if body is None else json.dumps(body).encode())
@@ -57,8 +57,9 @@ def decode_rpc(raw, request_id):
 
 
 class McpClient:
-    def __init__(self, endpoint, key, timeout=45):
+    def __init__(self, endpoint, key, timeout=45, *, bearer=False):
         self.endpoint, self.key = endpoint, key
+        self.auth_headers = {"Authorization": "Bearer " + key} if bearer else {"X-API-Key": key}
         self.timeout = timeout
         self.session = None
         self.sequence = 0
@@ -73,7 +74,7 @@ class McpClient:
             if method == "tools/call":
                 measurements["broker_tool_calls"] = measurements.get("broker_tool_calls", 0) + 1
         self.sequence += 1
-        headers = {"X-API-Key": self.key, "Accept": "application/json, text/event-stream"}
+        headers = {**self.auth_headers, "Accept": "application/json, text/event-stream"}
         if self.session:
             headers["Mcp-Session-Id"] = self.session
         if method != "initialize":
@@ -90,12 +91,12 @@ class McpClient:
     def initialize(self):
         result = self.rpc("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
                                         "clientInfo": {"name": "codebound-verifier", "version": "1"}})
-        headers = {"X-API-Key": self.key, "Accept": "application/json, text/event-stream",
+        headers = {**self.auth_headers, "Accept": "application/json, text/event-stream",
                    "MCP-Protocol-Version": "2025-06-18"}
         if self.session:
             headers["Mcp-Session-Id"] = self.session
         local_request(self.endpoint, method="POST", headers=headers,
-                      body={"jsonrpc": "2.0", "method": "notifications/initialized"})
+                      body={"jsonrpc": "2.0", "method": "notifications/initialized"}, timeout=self.timeout)
         return result
 
     def tools(self):

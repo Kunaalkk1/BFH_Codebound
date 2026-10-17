@@ -6,8 +6,8 @@ from codebound.llm.store import fingerprint
 from codebound.kit.config import ROOT
 
 class Registry:
-    def __init__(self):
-        self.store=ScriptStore(ROOT/'data/codebound.sqlite3')
+    def __init__(self, path=None):
+        self.store=ScriptStore(path if path is not None else ROOT/'data/codebound.sqlite3')
         with self.store.connection() as db:
             db.executescript('''
             CREATE TABLE IF NOT EXISTS kit_scripts (

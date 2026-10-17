@@ -24,7 +24,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Kit worker image build failed.' }
     & $PythonExe -m codebound.kit.configure
     if ($LASTEXITCODE -ne 0) { throw 'Kit tool registration failed.' }
-    Write-Host 'Kit provisioned. Run .\launch.ps1; Claude configuration remains untouched.'
+    Write-Host 'Kit provisioned. Run .\launch.ps1 -Demo; Claude configuration remains untouched.'
     exit 0
 } catch {
     Write-Host "KIT SETUP FAILED: $($_.Exception.Message)"

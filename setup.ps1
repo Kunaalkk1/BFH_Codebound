@@ -1,5 +1,10 @@
-param([switch]$DependenciesOnly, [string]$Model = 'qwen2.5-coder:3b')
+param([switch]$DependenciesOnly, [switch]$Demo, [string]$Model = 'qwen2.5-coder:3b')
 $ErrorActionPreference = 'Stop'
+if (-not $Demo) {
+    $operation=if ($DependenciesOnly) {'--dependencies-only'} else {'--setup'}
+    & python "$PSScriptRoot\launch.py" $operation
+    exit $LASTEXITCODE
+}
 Push-Location $PSScriptRoot
 $setupLog = $null
 try {
@@ -29,7 +34,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Backend dependency installation failed.' }
     & .\.venv-claude\Scripts\python.exe -m pip install -r integrations/claude_desktop/requirements-dev.txt
     if ($LASTEXITCODE -ne 0) { throw 'Claude bridge dependency installation failed.' }
-    if ($DependenciesOnly) { Write-Host 'Source and Python dependencies ready. Run .\setup.ps1 for provisioning.'; exit 0 }
+    if ($DependenciesOnly) { Write-Host 'Source and Python dependencies ready. Run .\setup.ps1 -Demo for provisioning.'; exit 0 }
     if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) { throw 'Install native Ollama and reopen PowerShell; see README.md.' }
     & ollama pull $Model
     if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Start Ollama and retry.' }
@@ -43,7 +48,7 @@ try {
         & .\.venv-claude\Scripts\python.exe integrations/claude_desktop/kit_bridge.py --prepare
         if ($LASTEXITCODE -ne 0) { throw 'Local bridge credential preparation failed.' }
     }
-    Write-Host 'Setup complete. Run .\launch.ps1. To add the Claude server, run .\launch\configure-kit-claude.ps1 explicitly.'
+    Write-Host 'Setup complete. Run .\launch.ps1 -Demo. To add the Claude server, run .\launch\configure-kit-claude.ps1 explicitly.'
     exit 0
 } catch {
     Write-Host "SETUP FAILED: $($_.Exception.Message)"

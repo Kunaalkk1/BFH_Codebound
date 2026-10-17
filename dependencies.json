@@ -1,4 +1,5 @@
 {
+  "anythingmcp-image": "helpcodeai/anythingmcp@sha256:af6c2cbcf7b7245a7ef992a543c811c895901ba8bbe932e30a3b21f1ae1ca954",
   "codebound-kit": {
     "url": "https://github.com/HelpCode-ai/codebound-kit.git",
     "commit": "a0b46923f085bb85038d9f373d5b4f2b48bae4c8"

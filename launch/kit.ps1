@@ -61,7 +61,7 @@ try {
         exit $LASTEXITCODE
     }
     if ($Operation -eq 'Start') {
-        if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'external\codebound-kit\package.json'))) { throw 'Run .\setup.ps1 to download the official kit and install dependencies; see README.' }
+        if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot 'external\codebound-kit\package.json'))) { throw 'Run .\setup.ps1 -Demo to download the official kit and install dependencies; see README.' }
         $nodeVersion=& node --version
         if ($LASTEXITCODE -ne 0 -or [int]($nodeVersion.TrimStart('v').Split('.')[0]) -lt 20) { throw 'Node 20+ required by the official kit.' }
         Write-Host "Node $nodeVersion"
