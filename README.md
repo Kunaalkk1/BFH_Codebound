@@ -79,7 +79,29 @@ print(json.dumps({"result": response}))
 
 Local Ollama generation is optional. Install/start native Ollama, pull a model such as `qwen2.5-coder:3b`, set `OLLAMA_MODEL` before launching (or store `{"model":"qwen2.5-coder:3b"}` in `.local/ollama.json`) and use the generation form. Stop and relaunch the API to pick up changed environment settings. Generation uses authorized tool schemas and saves source for review; it does not execute the generated program automatically. Generated programs can fail and should be reviewed. There is no cloud model fallback.
 
-API clients sign in with `POST /session/login` and use the returned bearer session for `/v1/me`, `/v1/servers`, `/v1/tools/{server_id}`, `/v1/scripts` and `/v1/generate`. Scripts support retrieval, version-checked updates, deletion and `/v1/scripts/{id}/execute`. See `/docs` for schemas. Current host integration is the browser UI and authenticated HTTP API; the existing Claude bridge is specific to demo mode.
+API clients sign in with `POST /session/login` and use the returned bearer session for `/v1/me`, `/v1/servers`, `/v1/tools/{server_id}`, `/v1/scripts` and `/v1/generate`. Scripts support retrieval, version-checked updates, deletion and `/v1/scripts/{id}/execute`. See `/docs` for schemas.
+
+## Claude Desktop JSON setup
+
+Create a per-user MCP API key scoped to your own MCP server in AnythingMCP. With the host running, generate the Claude entry:
+
+```sh
+python configure_claude.py
+```
+
+The helper installs its isolated MCP SDK dependencies if needed, asks for your server ID (or local MCP URL) and prompts for the API key with hidden input. It verifies a real SDK stdio connection before writing `.local/host/claude/codebound-host-entry.json`. The JSON contains absolute interpreter, bridge and credential-file paths, so you do not need to edit machine paths manually. It contains no API key. Re-running the helper reuses this machine's existing protected profile.
+
+To automatically back up and merge the generated entry into Claude Desktop:
+
+```sh
+python configure_claude.py --install
+```
+
+This explicit option preserves other MCP servers and preferences and refuses a conflicting entry. It detects standard Windows, Windows Store/MSIX and macOS config locations; use `--config /path/to/claude_desktop_config.json` for another installation. Save your work and quit/reopen Claude Desktop yourself afterwards. The helper never closes Claude. Use `--name another-profile` for another account/server, or `--rotate` to explicitly replace a saved key snapshot after rotating the key in AnythingMCP.
+
+On Windows, keys are encrypted with current-user DPAPI. On macOS/Linux they are stored in a private file with mode 600 and a mode-700 parent directory. Do not share the credential files or reuse another machine's generated JSON. Automation may supply `CODEBOUND_MCP_KEY` in the environment; no key is accepted as a command-line argument.
+
+This bridge exposes the tools visible to your own key on the selected AnythingMCP server. Codebound host saved-script operations remain available through its browser UI and HTTP API; the bridge does not automatically publish those operations as MCP tools. The separate Alice demo bridge is unchanged.
 
 ## Explicit hackathon demo
 
