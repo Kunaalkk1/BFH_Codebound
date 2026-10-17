@@ -1,0 +1,2 @@
+# Isolated from the existing backend environment.
+mcp==2.3.0

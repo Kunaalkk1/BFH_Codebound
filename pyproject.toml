@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codebound-secure-sandbox"
+version = "0.1.0"
+description = "Local tenant-scoped railway analytics with disposable Docker workers"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "httpx>=0.28,<1"]
+
+[tool.setuptools.packages.find]
+include = ["codebound*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["docker: real disposable Docker worker integration/security tests (opt in)", "mcp: live AnythingMCP routing and connector integration (opt in)", "ollama: real local inference through AnythingMCP and Docker (opt in)"]
