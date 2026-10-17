@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from codebound.auth import Principal
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.llm.client import AIError, OllamaClient, OllamaSettings
 from codebound.llm.models import GenerateRequest
 from codebound.llm.validator import validate_source

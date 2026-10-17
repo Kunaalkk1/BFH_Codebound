@@ -130,7 +130,7 @@ class LocalDockerExecutor:
             measurements["docker_executions"] = measurements.get("docker_executions", 0) + 1
         return message["result"]
 
-    def run_job(self, payload: dict) -> dict:
+    def run_job(self, payload: dict, broker=None) -> dict:
         """Trusted helper entry point; its stdin is supplied only by this backend."""
         image = self.ready()
         settings = self.settings
@@ -167,6 +167,10 @@ class LocalDockerExecutor:
             process = subprocess.Popen([docker_executable(), "start", "--attach", "-i", name],
                                        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            if broker is not None:
+                from codebound.broker_protocol import exchange
+                return exchange(process, json.loads(payload), broker, timeout=settings.timeout_seconds + 3,
+                                output_limit=settings.max_result_bytes)
             output = bytearray()
             exceeded = Event()
             # Even a compromised worker protocol cannot flood host capture memory.

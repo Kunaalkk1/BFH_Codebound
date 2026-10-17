@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "codebound-secure-sandbox"
 version = "0.1.0"
-description = "Local tenant-scoped railway analytics with disposable Docker workers"
+description = "Workspace-bound Python processing for the official Codebound hackathon kit"
 requires-python = ">=3.11"
 dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
 

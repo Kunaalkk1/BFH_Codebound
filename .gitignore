@@ -24,3 +24,8 @@ data/*.db*
 *.pfx
 *.dpapi
 claude_desktop_config.json*
+
+external/
+.codebound/
+codebound-report*.json
+codebound.team.json

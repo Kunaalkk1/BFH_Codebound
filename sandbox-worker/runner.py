@@ -15,7 +15,12 @@ def emit(status, **fields):
 
 
 def main():
-    request = json.load(sys.stdin)
+    request = json.loads(sys.stdin.buffer.readline(8_388_609))
+    if request.get("brokered"):
+        sys.path.insert(0, "/worker")
+        from brokered import main as brokered_main
+        brokered_main(request)
+        return
     # All files are on this execution's size-limited tmpfs, never host mounts.
     Path("/tmp/input.json").write_text(json.dumps(request["input"]), encoding="utf-8")
     Path("/tmp/script.py").write_text(request["source"], encoding="utf-8")

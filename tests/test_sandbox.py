@@ -8,7 +8,7 @@ import pytest
 
 from codebound.auth import Principal
 from codebound.execution import MockSandboxExecutor
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.main import create_app
 from codebound.sandbox import ExecutionState, SandboxSettings
 

@@ -1,4 +1,4 @@
-﻿param([switch]$Development, [ValidateSet('mock','local_docker')][string]$Mode = 'mock', [switch]$Mcp, [switch]$Ollama)
+param([switch]$Development, [ValidateSet('mock','local_docker')][string]$Mode = 'mock', [switch]$Mcp, [switch]$Ollama)
 if ($Ollama) { $Mcp = $true }
 if ($Mcp) { $Mode = 'local_docker' }
 . "$PSScriptRoot\common.ps1"
@@ -32,7 +32,7 @@ try {
     }
     if (Backend-Health) { throw 'Port 8000 already serves an unmanaged API; leaving it unchanged.' }
     if (-not (Test-Path -LiteralPath $PythonExe)) { throw 'Virtual environment missing; see setup.ps1.' }
-    if (-not (Test-Path (Join-Path $ProjectRoot 'data\railway.csv'))) { throw 'Dataset missing; run python -m codebound.generate_data using the project venv.' }
+    if (-not (Test-Path (Join-Path $ProjectRoot 'data\railway.csv'))) { throw 'Dataset missing; run python -m codebound.legacy.generate_data using the project venv.' }
     New-DemoTokens
     $tokens = Get-DemoTokens
     if ($tokens.a.Length -lt 32 -or $tokens.b.Length -lt 32 -or $tokens.a -eq $tokens.b) { throw 'Invalid demo token configuration.' }

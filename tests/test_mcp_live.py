@@ -60,7 +60,7 @@ def test_discovery_and_authentication(clients):
 def test_crud_connector_execution_and_tenant_isolation(clients):
     instances, config = clients
     a, b = instances["demo-tenant-1"], instances["demo-tenant-2"]
-    source = (ROOT / "scripts/september.py").read_text()
+    source = (ROOT / "tests/fixtures/september.py").read_text()
     record = tool_value(a.call("codebound_create_script", {"name": "MCP verification", "source_code": source}))
     sid = record["script_id"]
     try:
@@ -112,7 +112,7 @@ def test_worker_errors_and_cleanup(clients, source):
 
 def test_tenant_b_connector_and_worker_has_no_credentials(clients):
     b = clients[0]["demo-tenant-2"]
-    source = (ROOT / "scripts/september.py").read_text()
+    source = (ROOT / "tests/fixtures/september.py").read_text()
     record = tool_value(b.call("codebound_create_script", {"name": "Tenant B live verification", "source_code": source}))
     try:
         result = tool_value(b.call("codebound_execute_script", {"script_id": record["script_id"], "reference": {"kind": "connector", "id": "postgres-railway-b"}}))
@@ -129,7 +129,7 @@ def test_tenant_b_connector_and_worker_has_no_credentials(clients):
 
 
 def test_postgresql_roles_cannot_read_other_tenant():
-    from codebound.configure_connector import sql
+    from codebound.legacy.configure_connector import sql
     result = sql("SELECT has_table_privilege('codebound_reader_a','tickets_a','SELECT'), "
                  "has_table_privilege('codebound_reader_a','tickets_b','SELECT'), "
                  "has_table_privilege('codebound_reader_b','tickets_a','SELECT'), "
@@ -139,7 +139,7 @@ def test_postgresql_roles_cannot_read_other_tenant():
 
 
 def test_gateway_records_project_connector_invocations(clients):
-    from codebound.configure_connector import sql, quote
+    from codebound.legacy.configure_connector import sql, quote
     configuration = clients.configuration
     ids = [entry["connector_id"] for entry in configuration["tenants"].values()]
     ids += list(configuration["data_server"]["connectors"].values())

@@ -18,7 +18,7 @@ from urllib.request import Request, urlopen
 import uvicorn
 
 from codebound.auth import Principal
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.main import create_app
 
 

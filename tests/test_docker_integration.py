@@ -11,7 +11,7 @@ import pytest
 
 from codebound.auth import Principal
 from codebound.docker_executor import LABEL, PROJECT_LABEL, LocalDockerExecutor
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.main import create_app
 from codebound.sandbox import SandboxSettings
 
@@ -24,7 +24,8 @@ pytestmark = [pytest.mark.docker,
 def env(tmp_path, monkeypatch):
     monkeypatch.setenv("CODEBOUND_TEST_SECRET", "test-secret-must-never-enter-worker")
     generate_dataset(tmp_path)
-    settings = SandboxSettings(mode="local_docker", timeout_seconds=3, max_concurrent_per_tenant=1)
+    settings = SandboxSettings(mode="local_docker", timeout_seconds=3, max_concurrent_per_tenant=1,
+                               worker_image=os.getenv("CODEBOUND_DOCKER_TEST_IMAGE", "codebound-worker:kit"))
     app = create_app(tmp_path, settings=settings,
                      mock_tokens={"integration-a": Principal("demo-tenant-1"),
                                   "integration-b": Principal("demo-tenant-2")})
@@ -63,7 +64,7 @@ def test_real_python_api_and_audit(env):
 
 @pytest.mark.parametrize("tenant,dataset,expected", [(1, "railway-demo", 373864), (2, "lufthansa-demo", 395998)])
 def test_real_authorized_september(env, tenant, dataset, expected):
-    source = (Path(__file__).resolve().parent.parent / "scripts/september.py").read_text()
+    source = (Path(__file__).resolve().parent.parent / "tests/fixtures/september.py").read_text()
     response = run(env[tenant], source, dataset)
     assert response.status_code == 200, response.text
     assert response.json()["result"] == {"month": "September", "ticket_count": 45,

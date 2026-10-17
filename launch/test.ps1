@@ -3,12 +3,12 @@ if ($Ollama) {
     . "$PSScriptRoot\common.ps1"
     Push-Location $ProjectRoot
     try {
-        $env:CODEBOUND_TEST_OLLAMA = '1'
-        & $PythonExe -m pytest tests/test_ollama_live.py -q -s --tb=short --junitxml .local/pytest-ollama-results.xml
+        $env:CODEBOUND_TEST_KIT='1'
+        & $PythonExe -m pytest tests/test_kit_live.py -q --tb=short --junitxml .local/kit/pytest-ollama-results.xml
         exit $LASTEXITCODE
     } finally { Pop-Location }
 }
-if ($Mcp) { & "$PSScriptRoot\integrate.ps1" -Demo; exit $LASTEXITCODE }
+if ($Mcp) { & "$PSScriptRoot\kit.ps1" -Operation Check -Must; exit $LASTEXITCODE }
 . "$PSScriptRoot\common.ps1"
 try {
     if (-not (Test-Path -LiteralPath $PythonExe)) { throw 'Project virtual environment missing.' }

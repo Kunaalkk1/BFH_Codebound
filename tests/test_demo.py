@@ -4,7 +4,7 @@ from datetime import date
 import pytest
 from fastapi.testclient import TestClient
 
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.main import create_app
 from codebound.auth import Principal
 

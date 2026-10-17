@@ -19,15 +19,15 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def local_request(url, *, method="GET", body=None, headers=None, limit=2_000_000):
+def local_request(url, *, method="GET", body=None, headers=None, limit=2_000_000, timeout=45):
     parsed = urlsplit(url)
     if (parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"}
-            or parsed.port != 4000 or parsed.username or parsed.password or parsed.fragment):
+            or parsed.port not in {4000, 4200} or parsed.username or parsed.password or parsed.fragment):
         raise IntegrationError("Only the configured local AnythingMCP API is allowed")
     request = Request(url, method=method, headers={"Content-Type": "application/json", **(headers or {})},
                       data=None if body is None else json.dumps(body).encode())
     try:
-        with build_opener(ProxyHandler({}), NoRedirect()).open(request, timeout=45) as response:
+        with build_opener(ProxyHandler({}), NoRedirect()).open(request, timeout=timeout) as response:
             raw = response.read(limit + 1)
             if len(raw) > limit:
                 raise IntegrationError("AnythingMCP response exceeds the byte limit")
@@ -57,8 +57,9 @@ def decode_rpc(raw, request_id):
 
 
 class McpClient:
-    def __init__(self, endpoint, key):
+    def __init__(self, endpoint, key, timeout=45):
         self.endpoint, self.key = endpoint, key
+        self.timeout = timeout
         self.session = None
         self.sequence = 0
         self.last_request_bytes = 0
@@ -78,7 +79,7 @@ class McpClient:
         if method != "initialize":
             headers["MCP-Protocol-Version"] = "2025-06-18"
         body = {"jsonrpc": "2.0", "id": self.sequence, "method": method, "params": params}
-        raw, response_headers = local_request(self.endpoint, method="POST", headers=headers, body=body)
+        raw, response_headers = local_request(self.endpoint, method="POST", headers=headers, body=body, timeout=self.timeout)
         self.last_request_bytes = len(json.dumps(body).encode())
         self.last_response_bytes = len(raw)
         for name, value in response_headers.items():

@@ -108,9 +108,10 @@ def test_prepare_and_check_stdout_empty():
 
 
 def test_real_stdio_smoke():
-    result = subprocess.run([sys.executable, str(Path(__file__).with_name("smoke_test.py"))], capture_output=True, timeout=90)
-    assert result.returncode == 0, "Live bridge smoke failed; run smoke_test.py for sanitized diagnostics"
-    assert b"BRIDGE SMOKE PASSED" in result.stdout
+    # The active demonstration now uses the official kit, not retired Railway registrations.
+    result = subprocess.run([sys.executable, str(Path(__file__).with_name("kit_bridge.py")), "--smoke"], capture_output=True, timeout=90)
+    assert result.returncode == 0, "Live kit bridge smoke failed; run kit_bridge.py --smoke for sanitized diagnostics"
+    assert b"PASS official-kit SDK stdio" in result.stdout
 
 
 def test_real_invalid_upstream_auth_is_sanitized():

@@ -1,0 +1,4 @@
+﻿networks:
+  codebound:
+    name: codebound-kit-mocks
+    external: true

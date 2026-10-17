@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from codebound.auth import Principal
-from codebound.generate_data import generate_dataset
+from codebound.legacy.generate_data import generate_dataset
 from codebound.main import create_app
 
 TOKENS = {"trusted-test-context-a": Principal("demo-tenant-1"),

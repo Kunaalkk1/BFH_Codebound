@@ -1,51 +1,34 @@
-﻿"""Benchmark integrity checks independent of the live services."""
-import json
+﻿"""Official benchmark integrity: aggregation, paging, response bytes and assertions."""
 import pytest
-from codebound.benchmark import calculate, json_bytes, verify, evidence
-from codebound.metrics import execution_metrics
-from codebound.mcp_client import McpClient
+from codebound.kit import benchmark
 
 
-def test_baseline_filters_month_and_uses_row_values():
-    rows = [dict(tenant_id='demo-tenant-1',travel_date='2026-09-01',price_cents=12),
-            dict(tenant_id='demo-tenant-1',travel_date='2026-10-01',price_cents=999)]
-    assert calculate(rows) == dict(ticket_count=1,total_revenue_cents=12)
-    with pytest.raises(ValueError): verify(calculate(rows))
-    rows[0]['tenant_id']='demo-tenant-2'
-    with pytest.raises(ValueError): calculate(rows)
+def test_official_assertions_reject_fabricated_or_incomplete_rows():
+    expected=[dict(sku='A-test',purchasePrice=100,supplierPrice=110,driftPct=10)]
+    benchmark.verify({'rows':expected},expected)
+    with pytest.raises(ValueError):benchmark.verify({'rows':[]},expected)
+    with pytest.raises(ValueError):benchmark.verify({'rows':[{**expected[0],'driftPct':0}]},expected)
 
 
-def test_utf8_bytes_include_unicode_and_json_envelope():
-    value={'name':'\u20ac'}
-    assert json_bytes(value) == len('{"name":"\u20ac"}'.encode('utf-8'))
-    assert json_bytes(value) != len('{"name":"\u20ac"}')
+def test_raw_baseline_observes_pagination_batches_and_bytes(monkeypatch):
+    articles=[dict(sku='A-'+str(i),purchasePrice=100) for i in range(101)]
+    class Client:
+        last_response_bytes=1000
+        def __init__(self):self.calls=[]
+        def call(self,name,args):
+            self.calls.append((name,args))
+            if name=='mock_erp_list_articles':
+                page=args['page']; return {'structuredContent':{'items':articles[(page-1)*100:page*100],'totalPages':2}}
+            return {'structuredContent':{'prices':{sku:(120 if sku=='A-0' else 100) for sku in args['skus']}}}
+    monkeypatch.setattr(benchmark,'seq',lambda:0)
+    monkeypatch.setattr(benchmark,'counts',lambda _:dict(erp=2,supplier=2,carrier=0,payroll=0))
+    c=Client(); want=[dict(sku='A-0',purchasePrice=100,supplierPrice=120,driftPct=20)]
+    result=benchmark.raw_sample(c,want)
+    assert result['caller_mcp_tool_calls']==4
+    assert result['mcp_response_body_bytes']==4000
+    assert [len(a['skus']) for n,a in c.calls if n=='mock_supplier_get_prices']==[100,1]
+    assert result['result']=={'rows':want}
 
 
-def test_mcp_counter_tracks_observed_rpc_attempts(monkeypatch):
-    def response(*args,**kwargs):
-        body=kwargs['body']
-        return json.dumps(dict(jsonrpc='2.0',id=body['id'],result={})).encode(), {}
-    monkeypatch.setattr('codebound.mcp_client.local_request', response)
-    measured={}
-    token=execution_metrics.set(measured)
-    try:
-        client=McpClient('http://127.0.0.1:4000/mcp/test','not-a-secret')
-        client.rpc('initialize',{})
-        client.call('schema',{})
-        client.call('rows',{})
-        assert measured == dict(broker_mcp_rpc_attempts=3,broker_tool_calls=2)
-    finally: execution_metrics.reset(token)
-
-
-def test_audit_correlation_rejects_ambiguous_samples(tmp_path,monkeypatch):
-    import sqlite3
-    path=tmp_path/'events.sqlite3'
-    def connection(): return sqlite3.connect(path)
-    monkeypatch.setattr('codebound.benchmark.db_connection',connection)
-    with connection() as db:
-        db.execute('CREATE TABLE ai_events (tenant_id TEXT, script_id TEXT, operation TEXT, status TEXT, metrics_json TEXT)')
-        db.execute("INSERT INTO ai_events VALUES ('demo-tenant-1','script','run','succeeded','{}')")
-    assert evidence(0,'script') == {}
-    with connection() as db:
-        db.execute("INSERT INTO ai_events VALUES ('demo-tenant-1','script','run','succeeded','{}')")
-    with pytest.raises(ValueError): evidence(0,'script')
+def test_payload_bytes_measure_utf8_json():
+    assert benchmark.size({'value':'€'})==len('{"value":"€"}'.encode())
