@@ -44,8 +44,11 @@ def fetch_kit():
         raise RuntimeError('Install Git before demo setup.')
     if not KIT.exists() or not any(KIT.iterdir()):
         KIT.parent.mkdir(parents=True, exist_ok=True)
-        run(['git', 'clone', '--no-checkout', pin['url'], KIT])
-        run(['git', '-C', KIT, 'checkout', '--detach', pin['commit']])
+        # Public source files must remain readable when Docker COPY puts them
+        # in an image owned by root but executed as the upstream node user.
+        # Keep the private state umask in this process; change only Git's child.
+        run(['git', 'clone', '--no-checkout', pin['url'], KIT],umask=0o022)
+        run(['git', '-C', KIT, 'checkout', '--detach', pin['commit']],umask=0o022)
     actual = subprocess.check_output(['git', '-C', str(KIT), 'rev-parse', 'HEAD'], text=True).strip()
     if actual != pin['commit'] or not (KIT/'harness/setup.mjs').is_file():
         raise RuntimeError('Existing external/codebound-kit differs from the tested pin or is incomplete; preserved for review.')

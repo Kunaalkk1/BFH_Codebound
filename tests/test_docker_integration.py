@@ -104,7 +104,8 @@ print(json.dumps({"blocked":results}))
 def test_actual_anythingmcp_and_postgres_container_ips_blocked(env):
     app = env[0]
     targets = []
-    for name, port in (("amcp-app", 4000), ("amcp-postgres", 5432)):
+    for name, port in ((os.getenv('CODEBOUND_DOCKER_APP_CONTAINER','amcp-app'), 4000),
+                       (os.getenv('CODEBOUND_DOCKER_DB_CONTAINER','amcp-postgres'), 5432)):
         address = app.state.executor.command("inspect", "--format",
             "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}", name).decode().strip()
         assert address, "Start the verified AnythingMCP stack for this integration test"

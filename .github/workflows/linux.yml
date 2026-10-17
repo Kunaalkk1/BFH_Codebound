@@ -29,10 +29,15 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install -e '.[dev]'
       - run: docker build -t codebound-worker:host sandbox-worker
+      - run: python launch.py
       - run: python -m pytest tests/test_docker_integration.py -q
         env:
           CODEBOUND_TEST_DOCKER: '1'
           CODEBOUND_DOCKER_TEST_IMAGE: codebound-worker:host
+          CODEBOUND_DOCKER_APP_CONTAINER: codebound-host-app-1
+          CODEBOUND_DOCKER_DB_CONTAINER: codebound-host-postgres-1
+      - if: always()
+        run: python launch.py --stop
   native-demo:
     name: Native Linux demo (excluding inference)
     runs-on: ubuntu-24.04

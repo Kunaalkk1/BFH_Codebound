@@ -1,5 +1,9 @@
 """Portable demo setup, Docker gateway routing and Linux client profiles."""
 import json
+import os
+import shutil
+import subprocess
+import stat
 from types import SimpleNamespace
 from pathlib import Path
 import pytest
@@ -57,3 +61,28 @@ def test_kit_checkout_mismatch_is_preserved(tmp_path,monkeypatch):
     monkeypatch.setattr(demo_launch.subprocess,'check_output',lambda *args,**kw:'different-commit')
     with pytest.raises(RuntimeError,match='preserved'): demo_launch.fetch_kit()
     assert (kit/'custom.txt').read_text()=='keep operator changes'
+
+
+@pytest.mark.skipif(os.name!='posix',reason='Unix checkout permissions')
+def test_public_git_checkout_stays_readable_without_weakening_secret_umask(tmp_path,monkeypatch):
+    if not shutil.which('git'): pytest.skip('Git required for checkout permission regression')
+    upstream=tmp_path/'upstream';upstream.mkdir()
+    (upstream/'harness').mkdir()
+    (upstream/'harness/setup.mjs').write_text('// public fixture source\n')
+    subprocess.run(['git','init',str(upstream)],check=True,capture_output=True)
+    subprocess.run(['git','-C',str(upstream),'add','.'],check=True)
+    subprocess.run(['git','-C',str(upstream),'-c','user.name=Fixture','-c','user.email=fixture@example.test',
+        'commit','-m','Fixture'],check=True,capture_output=True)
+    commit=subprocess.check_output(['git','-C',str(upstream),'rev-parse','HEAD'],text=True).strip()
+    root=tmp_path/'repo';root.mkdir()
+    (root/'dependencies.json').write_text(json.dumps({'codebound-kit':{'url':str(upstream),'commit':commit}}))
+    monkeypatch.setattr(demo_launch,'ROOT',root)
+    monkeypatch.setattr(demo_launch,'KIT',root/'external/codebound-kit')
+    previous=os.umask(0o077)
+    try:
+        demo_launch.fetch_kit()
+        assert stat.S_IMODE((root/'external/codebound-kit/harness/setup.mjs').stat().st_mode)&0o044==0o044
+        private=root/'private-state.json';private.write_text('{}')
+        assert stat.S_IMODE(private.stat().st_mode)==0o600
+    finally:
+        os.umask(previous)
