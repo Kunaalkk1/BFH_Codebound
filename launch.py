@@ -259,17 +259,22 @@ def demo(args):
     if os.name != 'nt':
         raise RuntimeError('The demo launcher requires Windows PowerShell; host mode is cross-platform.')
     shell = shutil.which('powershell.exe')
+    if not shell:
+        raise RuntimeError('Windows PowerShell was not found on PATH.')
+    # Downloaded ZIPs mark scripts as Internet-origin. This applies only to
+    # the child process; no CurrentUser/LocalMachine policy is changed.
+    powershell = [shell, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File']
     if args.setup or args.dependencies_only:
-        command = [shell, '-NoProfile', '-File', ROOT / 'setup.ps1', '-Demo']
+        command = [*powershell, ROOT / 'setup.ps1', '-Demo']
         if args.dependencies_only:
             command.append('-DependenciesOnly')
     elif args.benchmark:
-        command = [shell, '-NoProfile', '-File', ROOT / 'benchmark.ps1']
+        command = [*powershell, ROOT / 'benchmark.ps1']
     elif args.test:
-        command = [shell, '-NoProfile', '-File', ROOT / 'launch/test.ps1']
+        command = [*powershell, ROOT / 'launch/test.ps1']
     else:
         operation = 'Status' if args.status else 'Stop' if args.stop else 'Start'
-        command = [shell, '-NoProfile', '-File', ROOT / 'launch/kit.ps1', '-Operation', operation]
+        command = [*powershell, ROOT / 'launch/kit.ps1', '-Operation', operation]
     run(command)
 
 

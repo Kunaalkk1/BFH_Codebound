@@ -119,6 +119,8 @@ python launch.py demo --stop
 
 Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses ports 3100/4200/8001 and its own mock services and databases. Host uses 3200/4300/8002; both can coexist. Host mode has no dependency on fixture data, demo keys or DPAPI snapshots. The full official checker still reports optional Level 3 as unsupported.
 
+For downloaded Windows ZIPs, prefer the Python demo commands above. They run the repository's PowerShell helpers with an execution policy scoped to their child process; persistent user and machine policy settings are unchanged. This avoids the unsigned-script error produced by Windows download-zone markings.
+
 ## Verification and deployment scope
 
 The default test suite covers authentication, script ownership, workspace isolation, version conflicts, sandbox policy and existing demo logic. Live tests are opt-in: `CODEBOUND_TEST_HOST=1` runs `tests/test_host_live.py` against an empty disposable gateway on port 4300 and real Docker. Those tests deliberately create accounts and refuse a populated instance; do not enable them against a working host. Ordinary tests do not create users.

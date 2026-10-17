@@ -8,7 +8,7 @@ if (-not $Demo) {
     exit $LASTEXITCODE
 }
 if ($Benchmark) { & "$PSScriptRoot\benchmark.ps1"; exit $LASTEXITCODE }
-if ($Test) { & powershell.exe -NoProfile -File "$PSScriptRoot\launch\test.ps1"; exit $LASTEXITCODE }
+if ($Test) { & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\launch\test.ps1"; exit $LASTEXITCODE }
 $operation = if ($Status) {'Status'} elseif ($Stop) {'Stop'} else {'Start'}
-& powershell.exe -NoProfile -File "$PSScriptRoot\launch\kit.ps1" -Operation $operation
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\launch\kit.ps1" -Operation $operation
 exit $LASTEXITCODE

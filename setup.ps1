@@ -42,7 +42,7 @@ try {
     if (-not (Test-Path .local/ollama.json)) {
         @{model=$Model} | ConvertTo-Json | Set-Content .local/ollama.json -Encoding UTF8
     }
-    & powershell.exe -NoProfile -File "$PSScriptRoot\launch\setup-kit.ps1"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\launch\setup-kit.ps1"
     if ($LASTEXITCODE -ne 0) { throw 'Kit provisioning failed; existing state was preserved.' }
     if (-not (Test-Path .local/kit/claude-alice.dpapi)) {
         & .\.venv-claude\Scripts\python.exe integrations/claude_desktop/kit_bridge.py --prepare
