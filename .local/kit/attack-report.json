@@ -1,0 +1,267 @@
+{
+  "results": [
+    {
+      "id": "A1",
+      "status": "PASS",
+      "details": "Refused and audited; no Payroll request reached the mock.",
+      "duration_ms": 2471.034
+    },
+    {
+      "id": "A2",
+      "status": "PASS",
+      "details": "Refused and audited; no Payroll request reached the mock.",
+      "duration_ms": 2116.239
+    },
+    {
+      "id": "A3",
+      "status": "PASS",
+      "details": "Real worker run and nonce verified.",
+      "duration_ms": 2183.378
+    },
+    {
+      "id": "A4",
+      "status": "PASS",
+      "details": "Real worker run and nonce verified.",
+      "duration_ms": 2135.869
+    },
+    {
+      "id": "A5",
+      "status": "PASS",
+      "details": "Real worker run and nonce verified. Outside-host log unchanged; unbound Carrier connection blocked.",
+      "duration_ms": 2309.987
+    },
+    {
+      "id": "A6",
+      "status": "PASS",
+      "details": "Real worker run and nonce verified.",
+      "duration_ms": 2442.157
+    },
+    {
+      "id": "A7",
+      "status": "PASS",
+      "details": "Real worker run and nonce verified.",
+      "duration_ms": 4343.099
+    },
+    {
+      "id": "A8",
+      "status": "PASS",
+      "details": "Stopped with TIMED_OUT; next sandbox call succeeded.",
+      "duration_ms": 19674.511
+    },
+    {
+      "id": "A9",
+      "status": "PASS",
+      "details": "Stopped with SCRIPT_FAILED; next sandbox call succeeded.",
+      "duration_ms": 4716.756
+    },
+    {
+      "id": "A10",
+      "status": "PASS",
+      "details": "Stopped with CALL_LIMIT_EXCEEDED; next sandbox call succeeded.",
+      "duration_ms": 7713.136
+    },
+    {
+      "id": "A11",
+      "status": "PASS",
+      "details": "Refused and audited; no Payroll request reached the mock.",
+      "duration_ms": 2148.037
+    },
+    {
+      "id": "A12",
+      "status": "PASS",
+      "details": "Host execution API absent (404).",
+      "duration_ms": 2009.051
+    },
+    {
+      "id": "A13",
+      "status": "PASS",
+      "details": "No env credentials injected; explicit canary literal masked before storage and in output/audit.",
+      "duration_ms": 2176.916
+    }
+  ],
+  "nonce_evidence": [
+    {
+      "card": "POSITIVE_CONTROL",
+      "actor": "alice",
+      "script_id": "42f2c047-f199-46be-93e1-b3d784b840e9",
+      "nonce": "attack-0305b89e25664ca6bc019066c409907a",
+      "workspace": "A",
+      "mock_sequences": [
+        519
+      ]
+    },
+    {
+      "card": "A1",
+      "actor": "bob",
+      "script_id": "3f74cbb7-4ff3-4c63-9b45-7adb6aace96d",
+      "nonce": "attack-a20f1ebdec8f4b5a84560ca02926bb86",
+      "workspace": "B",
+      "mock_sequences": [
+        521
+      ]
+    },
+    {
+      "card": "A2",
+      "actor": "bob",
+      "script_id": "73835b8b-7764-4881-89a7-984737a9f9b0",
+      "nonce": "attack-4c9c957cb6d04c10895095ae3bcf0184",
+      "workspace": "B",
+      "mock_sequences": [
+        522
+      ]
+    },
+    {
+      "card": "A3",
+      "actor": "bob",
+      "script_id": "d356cf3c-f9e1-41a4-8c73-4c42c5f3a234",
+      "nonce": "attack-dcca815db664484d84ef0a6c6ada843b",
+      "workspace": "B",
+      "mock_sequences": [
+        523
+      ]
+    },
+    {
+      "card": "A4",
+      "actor": "bob",
+      "script_id": "d39dd773-692f-4dc3-a77e-bcfe4e8123ab",
+      "nonce": "attack-138ea7be9ebe49d789dbb04eb3a94f2c",
+      "workspace": "B",
+      "mock_sequences": [
+        524
+      ]
+    },
+    {
+      "card": "A5",
+      "actor": "bob",
+      "script_id": "6cf8a546-f446-42ad-9f72-acecb95edae4",
+      "nonce": "attack-1b34365010434ac8b7dcd345e37005d5",
+      "workspace": "B",
+      "mock_sequences": [
+        525
+      ]
+    },
+    {
+      "card": "A6",
+      "actor": "bob",
+      "script_id": "f5bd8b11-587f-4326-80b2-b319c356eebb",
+      "nonce": "attack-0d577b0bf40f482780894ec58f29f3ee",
+      "workspace": "B",
+      "mock_sequences": [
+        526
+      ]
+    },
+    {
+      "card": "A7",
+      "actor": "alice",
+      "script_id": "01d4799c-055a-4692-a6be-9f9a11af5409",
+      "nonce": "attack-321706aa86e84ae6bff3032c49ea6bcd",
+      "workspace": "A",
+      "mock_sequences": [
+        527
+      ]
+    },
+    {
+      "card": "A7",
+      "actor": "bob",
+      "script_id": "94447b8c-2b16-4f3a-bdc8-f97be43cc1ec",
+      "nonce": "attack-624657a1aac54eb386f0b2a01c21cdea",
+      "workspace": "B",
+      "mock_sequences": [
+        528
+      ]
+    },
+    {
+      "card": "A8",
+      "actor": "bob",
+      "script_id": "1e96925a-0f2f-413e-862d-0b248c228e40",
+      "nonce": "attack-7aae14eab990485d8d56c3b64e162410",
+      "workspace": "B",
+      "mock_sequences": [
+        529
+      ]
+    },
+    {
+      "card": "A8",
+      "actor": "bob",
+      "script_id": "c425d793-7584-4e4b-b136-af114702d31e",
+      "nonce": "attack-1c6e22a7ae6a4bf58c086f483c01b409",
+      "workspace": "B",
+      "mock_sequences": [
+        530
+      ]
+    },
+    {
+      "card": "A9",
+      "actor": "bob",
+      "script_id": "e23eaa9e-fcd5-4045-bbfd-9dbcc2302035",
+      "nonce": "attack-f1abcbfea00d4737adb73faba10fc6d4",
+      "workspace": "B",
+      "mock_sequences": [
+        531
+      ]
+    },
+    {
+      "card": "A9",
+      "actor": "bob",
+      "script_id": "f4436fc6-4921-4f3d-9d1b-65a0dd410f90",
+      "nonce": "attack-a4496e61b205415392ce267dd7083148",
+      "workspace": "B",
+      "mock_sequences": [
+        532
+      ]
+    },
+    {
+      "card": "A10",
+      "actor": "bob",
+      "script_id": "5d2be0b2-9f81-4087-b476-cdf598881d02",
+      "nonce": "attack-f11de6c8c3574e9da4ff64065c8a7045",
+      "workspace": "B",
+      "mock_sequences": [
+        533
+      ]
+    },
+    {
+      "card": "A10",
+      "actor": "bob",
+      "script_id": "36b6c21b-047c-4fa3-a502-c49c95c42a0b",
+      "nonce": "attack-5d85e5929bc24020ba978d73d4673922",
+      "workspace": "B",
+      "mock_sequences": [
+        597
+      ]
+    },
+    {
+      "card": "A11",
+      "actor": "carol",
+      "script_id": "660171ee-54ba-48ed-a44d-a76e6dc6ae12",
+      "nonce": "attack-8542f394d826486da71e29e0305ea1b1",
+      "workspace": "A",
+      "mock_sequences": [
+        598
+      ]
+    },
+    {
+      "card": "A12",
+      "actor": "bob",
+      "script_id": "4470f65c-332e-4973-95ce-d130c6af5d9a",
+      "nonce": "attack-57332537cc334ea4bc19fa42834b455d",
+      "workspace": "B",
+      "mock_sequences": [
+        599
+      ]
+    },
+    {
+      "card": "A13",
+      "actor": "bob",
+      "script_id": "39a2bfba-e6ce-4452-aa08-c954524d857e",
+      "nonce": "attack-aa3a4026efbf4de7af50504ee885aa6e",
+      "workspace": "B",
+      "mock_sequences": [
+        600
+      ]
+    }
+  ],
+  "disposable_scripts_created": 18,
+  "disposable_scripts_deleted": 18,
+  "level3": "NOT IMPLEMENTED; no injected env or direct network capability"
+}

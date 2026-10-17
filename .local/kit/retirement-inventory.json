@@ -1,0 +1,66 @@
+{
+  "backup": ".local\\migration-backups\\retirement-20261017T143905Z",
+  "connectors": [
+    {
+      "id": "cmvc7v0rn00192bo5q4jceu3m",
+      "name": "Codebound PostgreSQL A",
+      "type": "DATABASE",
+      "base_url": "postgresql://postgres:5432/codebound_railway_demo"
+    },
+    {
+      "id": "cmvc7v0v6001k2bo5ozqngfw4",
+      "name": "Codebound PostgreSQL B",
+      "type": "DATABASE",
+      "base_url": "postgresql://postgres:5432/codebound_railway_demo"
+    }
+  ],
+  "action": "Disable and detach, retaining connector/tool/key records because hard deletion cascades invocation audits. Retire private server/key. Preserve PostgreSQL service/database/volumes.",
+  "private_server_id": "cmvc7v0yb001v2bo5mjg6jbhf",
+  "sqlite_rule": "Only ai_scripts whose parsed reference id is postgres-railway-a/b, railway-demo or lufthansa-demo; preserve all audits and unrelated scripts.",
+  "postgres_counts": [
+    "BEGIN",
+    "connectors_disabled=2",
+    "UPDATE 2",
+    "tools_disabled=10",
+    "UPDATE 10",
+    "assignments_removed=2",
+    "DELETE 2",
+    "UPDATE 1",
+    "UPDATE 1",
+    "COMMIT"
+  ],
+  "invocation_audits_before": 591,
+  "invocation_audits_after": 591,
+  "sqlite_scripts_deleted": 5,
+  "obsolete_ai_contexts_deleted": 20,
+  "sqlite_execution_audits_preserved": 117,
+  "completed": true,
+  "legacy_rest_retirement": {
+    "connectors": [
+      {
+        "id": "cmvc7tkps00032bo5fly5d5mv",
+        "name": "Codebound local A",
+        "base_url": "http://host.docker.internal:8000"
+      },
+      {
+        "id": "cmvc7tl6c000m2bo5v72f7m0d",
+        "name": "Codebound local B",
+        "base_url": "http://host.docker.internal:8000"
+      }
+    ],
+    "reason": "Confirmed old demo API is stopped; new kit bridge verified. Disable/detach unused old registrations; preserve credential and invocation records.",
+    "backup": "Full old AnythingMCP dump already in .local\\migration-backups\\retirement-20261017T143905Z",
+    "counts": [
+      "BEGIN",
+      "rest_connectors_disabled=2",
+      "UPDATE 2",
+      "rest_tools_disabled=20",
+      "UPDATE 20",
+      "DELETE 2",
+      "UPDATE 2",
+      "UPDATE 2",
+      "COMMIT"
+    ],
+    "invocation_audits_preserved": 591
+  }
+}

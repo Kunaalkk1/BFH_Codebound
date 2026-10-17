@@ -1,0 +1,68 @@
+[
+  {
+    "tool": "mock_supplier_list_offers",
+    "parameters": {
+      "category": "fasteners"
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "mock_supplier_list_offers",
+    "parameters": {
+      "category": "broken"
+    },
+    "status": "PASS",
+    "expected_error": "price_usd"
+  },
+  {
+    "tool": "price_drift_check",
+    "parameters": {
+      "threshold": 5
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "price_drift_check",
+    "parameters": {
+      "threshold": 10
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "catalogue_total",
+    "parameters": {
+      "category": "fasteners"
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "catalogue_total",
+    "parameters": {
+      "category": "adhesives"
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "catalogue_total",
+    "parameters": {
+      "category": "legacy"
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "stuck_orders",
+    "parameters": {
+      "days": 3,
+      "as_of": "2026-10-16T12:00:00.000Z"
+    },
+    "status": "PASS"
+  },
+  {
+    "tool": "stuck_orders",
+    "parameters": {
+      "days": 7,
+      "as_of": "2026-10-16T12:00:00.000Z"
+    },
+    "status": "PASS"
+  }
+]

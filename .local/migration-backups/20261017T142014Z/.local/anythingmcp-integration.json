@@ -1,0 +1,49 @@
+{
+  "tenants": {
+    "demo-tenant-1": {
+      "connector_id": "cmvc7tkps00032bo5fly5d5mv",
+      "server_id": "cmvc7tl2y000j2bo5dtu7c8av",
+      "key": "mcp_975867d09549e41feb843a9a31afe706a87dc0ef7911fea0edededfe544cfc0d",
+      "key_id": "cmvc7tl5g000l2bo5ki7oplge",
+      "endpoint": "http://127.0.0.1:4000/mcp/cmvc7tl2y000j2bo5dtu7c8av",
+      "ai_enabled": true
+    },
+    "demo-tenant-2": {
+      "connector_id": "cmvc7tl6c000m2bo5v72f7m0d",
+      "server_id": "cmvc7tlgx00122bo599t4fc49",
+      "key": "mcp_a9a01279d1ab83fd187229dca9156ed39106223050b616344100e7b58840ffe6",
+      "key_id": "cmvc7xhja002q2bo5xjzwjfjr",
+      "endpoint": "http://127.0.0.1:4000/mcp/cmvc7tlgx00122bo599t4fc49",
+      "ai_enabled": true
+    }
+  },
+  "database_passwords": {
+    "a": "65796e5f89f22f01e0181508da911b72ac3caa9b95a21fe72a269e572b179e97",
+    "b": "f52f37a373aff6da8c7b5bc482e78f7d2344ac50e6313fdb00cf9ab2a87b3ecf"
+  },
+  "data_server": {
+    "connectors": {
+      "a": "cmvc7v0rn00192bo5q4jceu3m",
+      "b": "cmvc7v0v6001k2bo5ozqngfw4"
+    },
+    "server_id": "cmvc7v0yb001v2bo5mjg6jbhf",
+    "key": "mcp_43da7e0fe8709822de536a2e56618957b7b4c33f0118fa866f025ad69096afba",
+    "key_id": "cmvc7v10u001y2bo5gh6wvft0"
+  },
+  "broker": {
+    "demo-tenant-1": {
+      "endpoint": "http://127.0.0.1:4000/mcp/cmvc7v0yb001v2bo5mjg6jbhf",
+      "key": "mcp_43da7e0fe8709822de536a2e56618957b7b4c33f0118fa866f025ad69096afba",
+      "reference": "postgres-railway-a",
+      "tool": "codebound_data_a",
+      "schema_tool": "codebound_schema_a"
+    },
+    "demo-tenant-2": {
+      "endpoint": "http://127.0.0.1:4000/mcp/cmvc7v0yb001v2bo5mjg6jbhf",
+      "key": "mcp_43da7e0fe8709822de536a2e56618957b7b4c33f0118fa866f025ad69096afba",
+      "reference": "postgres-railway-b",
+      "tool": "codebound_data_b",
+      "schema_tool": "codebound_schema_b"
+    }
+  }
+}

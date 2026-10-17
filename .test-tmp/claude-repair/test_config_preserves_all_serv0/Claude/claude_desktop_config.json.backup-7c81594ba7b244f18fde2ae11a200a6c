@@ -1,0 +1,1 @@
+{"preferences": {"enabled": true}, "mcpServers": {"Existing": {"command": "original", "env": {"TOKEN": "test-secret"}}, "existing": {"command": "other"}}}

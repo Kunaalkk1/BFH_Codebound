@@ -1,0 +1,31 @@
+﻿# Local environments and generated files
+.venv/
+.venv-*/
+.tmp/
+.test-tmp/
+__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+*.egg-info/
+.coverage
+htmlcov/
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+# User data, audit stores and credentials
+.local/
+data/*.csv
+data/*.sqlite3*
+data/*.db*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.dpapi
+claude_desktop_config.json*
+
+external/
+.codebound/
+codebound-report*.json
+codebound.team.json

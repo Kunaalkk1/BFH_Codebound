@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: codebound-secure-sandbox
+Version: 0.1.0
+Summary: Local synthetic-data proof of concept; no untrusted execution
+Requires-Python: >=3.11
+Requires-Dist: fastapi<1,>=0.115
+Requires-Dist: uvicorn<1,>=0.34
+Provides-Extra: dev
+Requires-Dist: pytest<9,>=8; extra == "dev"
+Requires-Dist: httpx<1,>=0.28; extra == "dev"

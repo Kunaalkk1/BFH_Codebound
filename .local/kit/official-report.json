@@ -1,0 +1,105 @@
+{
+  "at": "2026-10-17T14:58:29.455Z",
+  "url": "http://127.0.0.1:4200",
+  "summary": {
+    "must": "6/6",
+    "should": "0/1",
+    "secretScans": "3/3"
+  },
+  "results": [
+    {
+      "id": "P1",
+      "group": "must",
+      "title": "A processor chain converts, adds VAT and cleans, before the mapping",
+      "status": "pass",
+      "details": [
+        "30 offers converted, VAT added, descriptions cleaned (6522 bytes)"
+      ]
+    },
+    {
+      "id": "P2",
+      "group": "must",
+      "title": "A broken input stops the chain, loudly",
+      "status": "pass",
+      "details": [
+        "refused: { \"error\": \"Request failed with status code 422\", \"status\": 422, \"statusText\": \"Unprocessable Content\", \"responseBody\": { \"detail\": \"Invalid"
+      ]
+    },
+    {
+      "id": "F1",
+      "group": "must",
+      "title": "Scripts are tools with typed parameters",
+      "status": "pass",
+      "details": [
+        "all three scripts listed with typed parameters"
+      ]
+    },
+    {
+      "id": "F2",
+      "group": "must",
+      "title": "price_drift_check: hundreds of records in, four rows out",
+      "status": "pass",
+      "details": [
+        "threshold 5: 4 rows, correct, 501 bytes returned",
+        "threshold 10: 2 rows, correct, 260 bytes returned"
+      ]
+    },
+    {
+      "id": "F3",
+      "group": "must",
+      "title": "catalogue_total walks every page and admits a broken source",
+      "status": "pass",
+      "details": [
+        "fasteners: 800 items, complete=true",
+        "adhesives: 137 items, complete=true",
+        "legacy: 200 items, complete=false"
+      ]
+    },
+    {
+      "id": "F4",
+      "group": "must",
+      "title": "stuck_orders joins ERP orders with carrier tracking",
+      "status": "pass",
+      "details": [
+        "days 3: 5 stuck orders, correct",
+        "days 7: 2 stuck orders, correct"
+      ]
+    },
+    {
+      "id": "F5",
+      "group": "should",
+      "title": "supplier_account uses the injected key for a direct call",
+      "status": "missing",
+      "details": [
+        "no tool named supplier_account on workspace A's CODEBOUND server"
+      ]
+    },
+    {
+      "id": "S1",
+      "group": "scan",
+      "title": "No credential in any script output of this run",
+      "status": "pass",
+      "details": [
+        "9 outputs scanned"
+      ]
+    },
+    {
+      "id": "S2",
+      "group": "scan",
+      "title": "No credential in the backend logs",
+      "status": "pass",
+      "details": [
+        "435 KB of logs scanned"
+      ]
+    },
+    {
+      "id": "S3",
+      "group": "scan",
+      "title": "No credential stored in plaintext in the database",
+      "status": "pass",
+      "details": [
+        "2074 KB of data scanned"
+      ]
+    }
+  ]
+}

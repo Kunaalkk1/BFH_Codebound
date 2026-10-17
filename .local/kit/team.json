@@ -1,0 +1,11 @@
+{
+  "logs": {
+    "docker": "codebound-kit-app"
+  },
+  "postgres": {
+    "docker": "codebound-kit-postgres",
+    "user": "amcp",
+    "db": "anythingmcp"
+  },
+  "callTimeoutSeconds": 120
+}

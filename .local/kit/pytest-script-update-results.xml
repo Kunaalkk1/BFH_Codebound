@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="1" time="2.895" timestamp="2026-10-17T17:03:26.029099+02:00" hostname="DESKTOP-HOE1MPI"><testcase classname="tests.test_kit_live" name="test_versioned_source_updates_enforce_owner_and_version" time="2.481" /></testsuite></testsuites>

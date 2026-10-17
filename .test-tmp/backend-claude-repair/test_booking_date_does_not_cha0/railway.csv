@@ -1,0 +1,3 @@
+tenant_id,booking_date,travel_date,price_cents
+demo-tenant-1,2026-08-25,2026-09-01,1200
+demo-tenant-1,2026-09-25,2026-10-01,9900

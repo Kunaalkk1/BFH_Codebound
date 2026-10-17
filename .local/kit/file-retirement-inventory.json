@@ -1,0 +1,12 @@
+{
+  "move": {
+    "codebound/generate_data.py": "codebound/legacy/generate_data.py",
+    "codebound/configure_connector.py": "codebound/legacy/configure_connector.py",
+    "scripts/september.py": "tests/fixtures/september.py"
+  },
+  "remove": {
+    "data/railway.csv": "Synthetic source already backed up; official mocks replace active data.",
+    "codebound/benchmark.py": "Superseded by official-kit benchmark; test imports will be replaced."
+  },
+  "preserve": "Existing SQLite/audits, old PostgreSQL database/volumes and all credentials remain; legacy regression fixtures retained separately."
+}

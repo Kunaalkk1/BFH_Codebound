@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "codebound-tenant-a": {
+      "command": "D:\\work_projects\\hackathon\\ai_sandbox\\.venv-claude\\Scripts\\python.exe",
+      "args": [
+        "-u",
+        "D:\\work_projects\\hackathon\\ai_sandbox\\integrations\\claude_desktop\\bridge.py"
+      ]
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"tenants": {"demo-tenant-1": {"endpoint": "http://127.0.0.1:4000/mcp/server-a", "key": "mcp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, "demo-tenant-2": {"endpoint": "http://127.0.0.1:4000/mcp/server-b", "key": "mcp_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}}
