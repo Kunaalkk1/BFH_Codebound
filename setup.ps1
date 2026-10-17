@@ -35,8 +35,11 @@ try {
     & .\.venv-claude\Scripts\python.exe -m pip install -r integrations/claude_desktop/requirements-dev.txt
     if ($LASTEXITCODE -ne 0) { throw 'Claude bridge dependency installation failed.' }
     if ($DependenciesOnly) { Write-Host 'Source and Python dependencies ready. Run .\setup.ps1 -Demo for provisioning.'; exit 0 }
-    if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) { throw 'Install native Ollama and reopen PowerShell; see README.md.' }
-    & ollama pull $Model
+    . "$PSScriptRoot\launch\common.ps1"
+    $OllamaExe = Get-OllamaExecutable
+    Write-Host "Ollama CLI found: $OllamaExe"
+    Start-OllamaIfNeeded $OllamaExe
+    & $OllamaExe pull $Model
     if ($LASTEXITCODE -ne 0) { throw 'Model download failed. Start Ollama and retry.' }
     New-Item -ItemType Directory -Force -Path .local | Out-Null
     if (-not (Test-Path .local/ollama.json)) {

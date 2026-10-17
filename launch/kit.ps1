@@ -67,15 +67,8 @@ try {
         Write-Host "Node $nodeVersion"
         try { $null=Read-JsonUrl 'http://127.0.0.1:11434/api/tags' }
         catch {
-            $ollama=Find-Executable 'ollama.exe' @("$env:LOCALAPPDATA\Programs\Ollama\ollama.exe")
-            if (-not $ollama) { throw 'Install native Ollama and configure the required local model.' }
-            Start-Process -FilePath $ollama -ArgumentList 'serve' -WindowStyle Hidden
-            $deadline=[DateTime]::UtcNow.AddSeconds(30)
-            while ($true) {
-                try { $null=Read-JsonUrl 'http://127.0.0.1:11434/api/tags';break } catch {}
-                if ([DateTime]::UtcNow -gt $deadline) { throw 'Ollama readiness timed out after 30 seconds.' }
-                Start-Sleep -Seconds 1
-            }
+            $ollama=Get-OllamaExecutable
+            Start-OllamaIfNeeded $ollama
         }
         try { $null = Read-JsonUrl 'http://127.0.0.1:14180/__health'; $null = Read-JsonUrl 'http://127.0.0.1:14181/__health' }
         catch {

@@ -19,6 +19,37 @@ function Find-Executable([string]$Name, [string[]]$Candidates = @()) {
     return $null
 }
 
+function Get-OllamaExecutable {
+    if ($env:CODEBOUND_OLLAMA_EXE) {
+        if (-not (Test-Path -LiteralPath $env:CODEBOUND_OLLAMA_EXE -PathType Leaf)) {
+            throw 'CODEBOUND_OLLAMA_EXE does not point to an existing ollama.exe.'
+        }
+        return $env:CODEBOUND_OLLAMA_EXE
+    }
+    $executable = Find-Executable 'ollama.exe' @(
+        "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe",
+        "$env:ProgramFiles\Ollama\ollama.exe")
+    if (-not $executable) {
+        throw 'Ollama CLI not found on PATH or in its standard installation folders. Set CODEBOUND_OLLAMA_EXE to the full path of ollama.exe for a custom installation.'
+    }
+    return $executable
+}
+
+function Start-OllamaIfNeeded([string]$Executable) {
+    try { $null = Read-JsonUrl 'http://127.0.0.1:11434/api/version'; return }
+    catch {}
+    Start-Process -FilePath $Executable -ArgumentList 'serve' -WindowStyle Hidden
+    $deadline = [DateTime]::UtcNow.AddSeconds(30)
+    while ($true) {
+        try { $null = Read-JsonUrl 'http://127.0.0.1:11434/api/version'; return }
+        catch {}
+        if ([DateTime]::UtcNow -gt $deadline) {
+            throw 'Ollama was found, but its server did not become available at http://127.0.0.1:11434 within 30 seconds. Open Ollama and retry.'
+        }
+        Start-Sleep -Milliseconds 500
+    }
+}
+
 $DockerExe = Find-Executable 'docker.exe' @(
     "$env:LOCALAPPDATA\Programs\DockerDesktop\resources\bin\docker.exe",
     "$env:ProgramFiles\Docker\Docker\resources\bin\docker.exe")

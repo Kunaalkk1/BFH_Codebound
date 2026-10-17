@@ -121,6 +121,8 @@ Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses port
 
 For downloaded Windows ZIPs, prefer the Python demo commands above. They run the repository's PowerShell helpers with an execution policy scoped to their child process; persistent user and machine policy settings are unchanged. This avoids the unsigned-script error produced by Windows download-zone markings.
 
+Demo setup finds `ollama.exe` on PATH or in the standard per-user and Program Files installation folders, then checks its local API before pulling the model. A terminal opened before Ollama was installed can therefore still work. For a custom installation, set `$env:CODEBOUND_OLLAMA_EXE = 'D:\Your Ollama Folder\ollama.exe'` before demo setup. Missing CLI, server readiness and model-download failures are reported separately.
+
 ## Verification and deployment scope
 
 The default test suite covers authentication, script ownership, workspace isolation, version conflicts, sandbox policy and existing demo logic. Live tests are opt-in: `CODEBOUND_TEST_HOST=1` runs `tests/test_host_live.py` against an empty disposable gateway on port 4300 and real Docker. Those tests deliberately create accounts and refuse a populated instance; do not enable them against a working host. Ordinary tests do not create users.
