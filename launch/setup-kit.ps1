@@ -2,7 +2,7 @@
 Push-Location $ProjectRoot
 try {
     if (-not (Docker-Ready)) { throw 'Start Docker Desktop first.' }
-    if (-not (Test-Path external/codebound-kit/package.json)) { throw 'Clone https://github.com/HelpCode-ai/codebound-kit into external/codebound-kit first.' }
+    & "$PSScriptRoot\fetch-kit.ps1"
     & $PythonExe -m codebound.kit.prepare
     if ($LASTEXITCODE -ne 0) { throw 'Kit configuration preparation failed.' }
     & $DockerExe compose -f external/codebound-kit/compose/mocks.yml -f docker/compose.kit-mocks.yml up -d --build

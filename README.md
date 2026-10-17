@@ -68,19 +68,19 @@ For an already provisioned checkout, launch with one command:
 
 Launch reuses healthy services and verifies mocks, workspace discovery, the restricted worker, the model and the kit bridge credential. Stop gracefully shuts down the managed kit API, its isolated AnythingMCP/PostgreSQL containers and its dedicated mocks. It retains all databases/volumes/images and leaves other mock installations, the original `amcp` installation, Ollama and Claude intact.
 
-For a new checkout, prepare dependencies explicitly:
+For a new Windows checkout, install the prerequisites above and start Docker Desktop and Ollama. Then run:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e '.[dev]'
-python -m venv .venv-claude
-.\.venv-claude\Scripts\python.exe -m pip install -r integrations/claude_desktop/requirements-dev.txt
-git clone https://github.com/HelpCode-ai/codebound-kit external/codebound-kit
-ollama pull qwen2.5-coder:3b
-$env:OLLAMA_MODEL = 'qwen2.5-coder:3b'
-.\launch\setup-kit.ps1
+git clone https://github.com/Kunaalkk1/BFH_Codebound.git
+cd BFH_Codebound
+git switch dev_sanchit
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
 .\launch.ps1
 ```
+
+`setup.ps1` downloads the official kit at the tested commit in `dependencies.json`, creates both Python environments, installs backend/test/bridge dependencies (including Windows DPAPI), pulls the local model, provisions fresh isolated services and prepares a credential for this Windows user. It preserves existing state and does not change Claude Desktop configuration. For download/install only, use `.\setup.ps1 -DependenciesOnly`. For an existing clone, first run `git pull --ff-only origin dev_sanchit`. The launcher and setup currently support Windows; Linux/macOS need a separate launcher and credential integration.
+
+The official kit is fetched automatically into `external/codebound-kit`; it is not included in the parent repository. GitHub access is required during setup. The AnythingMCP source submodule is optional for this Docker-image-based demo; to also download that source, run `git submodule update --init anythingmcp`. Never copy another machine's `.local` directory, database, virtual environments or DPAPI credentials.
 
 The model setting may instead be stored privately in `.local/ollama.json`. Backend dependencies are FastAPI/Uvicorn, with pytest/httpx for tests. The separate bridge environment uses its pinned MCP SDK and Windows DPAPI packages. The official kit has no npm dependencies.
 
