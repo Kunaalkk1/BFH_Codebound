@@ -82,6 +82,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
 
 The official kit is fetched automatically into `external/codebound-kit`; it is not included in the parent repository. GitHub access is required during setup. The AnythingMCP source submodule is optional for this Docker-image-based demo; to also download that source, run `git submodule update --init anythingmcp`. Never copy another machine's `.local` directory, database, virtual environments or DPAPI credentials.
 
+If setup fails, it prints the failing script location and saves a transcript to `.local/setup-<timestamp>.log`. Missing repository files are reported with their full path. Share the final error lines when requesting help; keep the complete log private. An empty `external/codebound-kit` directory is downloaded automatically.
+
 The model setting may instead be stored privately in `.local/ollama.json`. Backend dependencies are FastAPI/Uvicorn, with pytest/httpx for tests. The separate bridge environment uses its pinned MCP SDK and Windows DPAPI packages. The official kit has no npm dependencies.
 
 `setup-kit.ps1` uses the official mock Compose file, the official AnythingMCP network override, small local isolation/port overlays and the unmodified official setup function. It checks for an empty isolated database and refuses to overwrite another mock setup's credentials. Registration adds the processor routing, raw processor-input tool and Codebound script connector only to the newly created workspace servers. Setup never runs a database reset or `down -v`.

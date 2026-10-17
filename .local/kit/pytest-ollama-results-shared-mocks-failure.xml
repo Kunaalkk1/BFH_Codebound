@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="20.097" timestamp="2026-10-17T16:48:23.402400+02:00" hostname="DESKTOP-HOE1MPI"><testcase classname="tests.test_kit_live" name="test_actual_generation_and_exact_reuse" time="16.724"><failure message="codebound.mcp_client.IntegrationError: Connector tool failed">tests\test_kit_live.py:18: in test_actual_generation_and_exact_reuse
-    first=tool_value(c.call('codebound_run_task',args));sid=first['script_id']
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-codebound\connector_broker.py:10: in tool_value
-    raise IntegrationError("Connector tool failed")
-E   codebound.mcp_client.IntegrationError: Connector tool failed</failure></testcase><testcase classname="tests.test_kit_live" name="test_carol_role_is_enforced_inside_broker" time="2.846" /></testsuite></testsuites>

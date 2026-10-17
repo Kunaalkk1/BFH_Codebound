@@ -26,5 +26,10 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Kit tool registration failed.' }
     Write-Host 'Kit provisioned. Run .\launch.ps1; Claude configuration remains untouched.'
     exit 0
-} catch { Write-Host "KIT SETUP FAILED: $($_.Exception.Message)"; exit 1 }
+} catch {
+    Write-Host "KIT SETUP FAILED: $($_.Exception.Message)"
+    Write-Host $_.InvocationInfo.PositionMessage
+    Write-Host $_.ScriptStackTrace
+    exit 1
+}
 finally { Pop-Location }

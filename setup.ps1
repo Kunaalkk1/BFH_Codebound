@@ -1,7 +1,15 @@
 param([switch]$DependenciesOnly, [string]$Model = 'qwen2.5-coder:3b')
 $ErrorActionPreference = 'Stop'
 Push-Location $PSScriptRoot
+$setupLog = $null
 try {
+    New-Item -ItemType Directory -Force -Path .local | Out-Null
+    $setupLog = Join-Path $PSScriptRoot ('.local\setup-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.log')
+    Start-Transcript -Path $setupLog | Out-Null
+    foreach ($relative in @('dependencies.json','pyproject.toml','launch\fetch-kit.ps1','launch\setup-kit.ps1','integrations\claude_desktop\requirements-dev.txt','sandbox-worker\Dockerfile','sandbox-worker\runner.py','sandbox-worker\brokered.py','docker\compose.kit.yml','docker\compose.kit-mocks.yml','docker\compose.kit-network.yml')) {
+        $required = Join-Path $PSScriptRoot $relative
+        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) { throw "Required repository file is missing: $required. Pull dev_sanchit or clone it into a new folder." }
+    }
     foreach ($command in @('git','python','node')) {
         if (-not (Get-Command $command -ErrorAction SilentlyContinue)) { throw "Install $command and reopen PowerShell first; see README.md." }
     }
@@ -37,5 +45,11 @@ try {
     }
     Write-Host 'Setup complete. Run .\launch.ps1. To add the Claude server, run .\launch\configure-kit-claude.ps1 explicitly.'
     exit 0
-} catch { Write-Host "SETUP FAILED: $($_.Exception.Message)"; exit 1 }
-finally { Pop-Location }
+} catch {
+    Write-Host "SETUP FAILED: $($_.Exception.Message)"
+    Write-Host $_.InvocationInfo.PositionMessage
+    Write-Host $_.ScriptStackTrace
+    if ($setupLog) { Write-Host "Setup log: $setupLog" }
+    exit 1
+}
+finally { if ($setupLog) { Stop-Transcript -ErrorAction SilentlyContinue | Out-Null }; Pop-Location }
