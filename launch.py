@@ -80,9 +80,16 @@ def dependencies():
     if sys.version_info < (3, 11):
         raise RuntimeError('Python 3.11+ is required')
     if not PYTHON.exists():
+        if (ROOT / '.venv').exists():
+            raise RuntimeError('Existing .venv is incomplete or belongs to another OS. Rename it, then retry to create a local environment.')
         try: run([sys.executable, '-m', 'venv', ROOT / '.venv'])
         except subprocess.CalledProcessError:
             raise RuntimeError('Could not create .venv. On Debian/Ubuntu install python3-venv; then retry with Python 3.11+.') from None
+    valid = subprocess.run([str(PYTHON), '-I', '-c',
+        'import sys; sys.exit(not (sys.version_info >= (3, 11) and sys.prefix != sys.base_prefix))'],
+        cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if valid.returncode:
+        raise RuntimeError('Existing .venv requires Python 3.11+ on this OS. Rename .venv and rerun with Python 3.11+ to recreate it.')
     check = subprocess.run([str(PYTHON), '-c', 'import fastapi, uvicorn, codebound.host.api'],
         cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if check.returncode:
@@ -296,6 +303,8 @@ def main():
         group.add_argument('--' + flag, action='store_true')
     args = parser.parse_args()
     try:
+        if sys.version_info < (3, 11):
+            raise RuntimeError('Python 3.11+ is required; this interpreter is ' + sys.version.split()[0])
         if args.mode == 'host':
             with host_lock():
                 host(args)

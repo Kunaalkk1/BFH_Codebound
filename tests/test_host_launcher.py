@@ -142,3 +142,44 @@ def test_already_running_ollama_does_not_start_another_process(tmp_path):
         capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
     assert 'EXISTING_SERVER_REUSED' in result.stdout
+
+
+def test_dependencies_reject_copied_environment_before_install(tmp_path, monkeypatch):
+    monkeypatch.setattr(launch, 'ROOT', tmp_path)
+    monkeypatch.setattr(launch, 'PYTHON', tmp_path/'.venv/bin/python')
+    monkeypatch.setattr(launch.sys, 'version_info', (3, 11))
+    (tmp_path/'.venv/Scripts').mkdir(parents=True)
+    (tmp_path/'.venv/Scripts/python.exe').touch()
+    with pytest.raises(RuntimeError, match='another OS'):
+        launch.dependencies()
+
+
+def test_dependencies_reject_old_environment_before_install(tmp_path, monkeypatch):
+    interpreter = tmp_path/'.venv/bin/python'
+    interpreter.parent.mkdir(parents=True)
+    interpreter.touch()
+    monkeypatch.setattr(launch, 'ROOT', tmp_path)
+    monkeypatch.setattr(launch, 'PYTHON', interpreter)
+    monkeypatch.setattr(launch.sys, 'version_info', (3, 11))
+    monkeypatch.setattr(launch.subprocess, 'run', lambda *a, **kw: SimpleNamespace(returncode=1))
+    with pytest.raises(RuntimeError, match='Rename .venv'):
+        launch.dependencies()
+
+
+@pytest.mark.skipif(os.name == 'nt', reason='Bash entry points')
+@pytest.mark.parametrize('script,args,expected', [
+    ('launch.sh', ['demo', '--status'], ['demo', '--status']),
+    ('setup.sh', ['demo'], ['demo', '--setup']),
+    ('launch/demo.sh', ['--stop'], ['demo', '--stop']),
+    ('launch/test.sh', ['demo'], ['demo', '--test']),
+    ('launch/status.sh', ['demo'], ['demo', '--status']),
+    ('launch/stop.sh', ['demo'], ['demo', '--stop']),
+])
+def test_shell_entrypoints_preserve_arguments_from_another_directory(tmp_path, script, args, expected):
+    interpreter = tmp_path/'fake python'
+    interpreter.write_text('#!/bin/bash\nif [[ "$1" == "-I" ]]; then exit 0; fi\nprintf "%s\\n" "$@"\n')
+    interpreter.chmod(0o755)
+    result = subprocess.run(['bash', str(launch.ROOT/script), *args], cwd=tmp_path,
+        env=dict(os.environ, CODEBOUND_PYTHON=str(interpreter)), capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == [str(launch.ROOT/'launch.py'), *expected]

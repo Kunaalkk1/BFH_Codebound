@@ -119,6 +119,10 @@ python launch.py demo --stop
 
 Linux uses the Python commands above; see [the Linux guide](docs/linux.md). Windows equivalents are `setup.ps1 -Demo` and `launch.ps1 -Demo`. Demo uses ports 3100/4200/8001 and its own mock services and databases. Host uses 3200/4300/8002; both can coexist. Host mode has no dependency on fixture data, demo keys or DPAPI snapshots. The full official checker still reports optional Level 3 as unsupported.
 
+Linux shell equivalents are `./setup.sh demo`, `./launch.sh demo`, and `./launch/status.sh demo`.
+The launcher detects the OS and uses native Python on Linux or PowerShell for Windows demo operations.
+Python dependencies stay in the Git-ignored `.venv`; recreate it with Python 3.11+ on each PC rather than copying it between machines. See [environment setup](docs/linux.md#shell-launchers-and-portable-python-environments).
+
 For downloaded Windows ZIPs, prefer the Python demo commands above. They run the repository's PowerShell helpers with an execution policy scoped to their child process; persistent user and machine policy settings are unchanged. This avoids the unsigned-script error produced by Windows download-zone markings.
 
 Demo setup finds `ollama.exe` on PATH or in the standard per-user and Program Files installation folders, then checks its local API before pulling the model. A terminal opened before Ollama was installed can therefore still work. For a custom installation, set `$env:CODEBOUND_OLLAMA_EXE = 'D:\Your Ollama Folder\ollama.exe'` before demo setup. Missing CLI, server readiness and model-download failures are reported separately.
