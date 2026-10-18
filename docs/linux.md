@@ -56,10 +56,6 @@ export CODEBOUND_OUTSIDE_ADMIN=http://127.0.0.1:14181
 node external/codebound-kit/harness/cli.mjs check --team .local/kit/team.json --only must
 ```
 
-### Recovering a demo that fails to start
-
-Update this checkout and rerun `python3 launch.py demo` (or `python3 launch.py demo --setup` if setup never completed). The Linux launcher backs up and repairs the known retired AnythingMCP image digest while retaining secrets and operator-selected images. Mock image builds now set readable source permissions explicitly, including for existing checkouts created with `umask 077`. Existing accounts and Docker volumes are retained.
-
 ## Claude JSON
 
 Install Claude Desktop following [Anthropic's platform instructions](https://support.claude.com/en/articles/10065433-install-claude-desktop). For your own host and scoped per-user MCP key:
