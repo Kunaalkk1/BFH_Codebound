@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codebound Host</title>
+<style>body{max-width:850px;margin:40px auto;padding:0 20px;background:#121722;color:#e6edf5;font:16px system-ui}a{color:#8ac5ff}input,textarea,select,button{font:inherit;padding:9px;margin:5px 0;background:#202a3a;color:inherit;border:1px solid #596578;border-radius:5px}textarea{width:96%;min-height:150px;font-family:monospace}button{cursor:pointer}pre{white-space:pre-wrap;overflow-wrap:anywhere}label{display:block}section{margin:24px 0}small{color:#b1c0d2}</style>
+<h1>Codebound</h1><p>Your workspace, connectors and saved scripts.</p>
+<p><a href="http://localhost:3200" target="_blank" rel="noopener">Manage accounts and connectors in AnythingMCP</a></p>
+<section id="login"><h2>Sign in</h2><p>On a new host, create your administrator in AnythingMCP first.</p>
+<form id="signIn"><label>Email <input id="email" type="email" required autocomplete="username"></label><label>Password <input id="password" type="password" required autocomplete="current-password"></label><button>Sign in</button></form></section>
+<section id="workspace" hidden><p id="who"></p><button id="logout">Sign out</button>
+<h2>Tools</h2><select id="server" aria-label="MCP server"></select><button id="loadTools">Show available tools</button><pre id="toolList"></pre>
+<h2>Saved scripts</h2><select id="scripts" aria-label="Saved script"></select><button id="refresh">Refresh</button><button id="load">Load</button>
+<label>Name <input id="name" value="My script"></label><label>Allowed tool names, separated by commas <input id="bindings" size="55"></label>
+<label>Python <textarea id="source">import json
+print(json.dumps({"message": parameters.get("message", "Hello from Codebound")}))</textarea></label>
+<button id="save">Save new script</button><button id="update">Save changes</button><button id="delete">Delete selected</button>
+<label>Parameters (JSON) <input id="parameters" size="55" value='{"message":"Hello"}'></label><button id="run">Run selected script</button>
+<h2>Generate with local Ollama</h2><label>Task <input id="task" size="65" placeholder="Describe a task using your allowed tools"></label><button id="generate">Generate and save</button><small>Requires a configured local model. Generated source is available for review before execution.</small></section>
+<pre id="output" role="status"></pre>
+<script>
+let token=sessionStorage.getItem('codebound-session')||'',version=null;
+const $=id=>document.getElementById(id),show=v=>$('output').textContent=typeof v==='string'?v:JSON.stringify(v,null,2);
+async function api(path,method='GET',body){const r=await fetch(path,{method,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});const v=await r.json();if(!r.ok)throw Error(typeof v.detail==='string'?v.detail:JSON.stringify(v.detail));return v;}
+function action(id,fn){$(id).onclick=async()=>{try{await fn();}catch(e){show(e.message);}};}
+function options(el,rows,value,label){el.replaceChildren();for(const row of rows){const o=document.createElement('option');o.value=row[value];o.textContent=row[label];el.append(o);}}
+async function refresh(){options($('scripts'),(await api('/v1/scripts')).scripts,'script_id','name');version=null;}
+async function enter(){const user=await api('/v1/me');$('who').textContent=`Workspace ${user.workspace} · ${user.role}`;options($('server'),(await api('/v1/servers')).servers,'id','name');await refresh();$('login').hidden=true;$('workspace').hidden=false;}
+$('signIn').onsubmit=async e=>{e.preventDefault();try{const v=await api('/session/login','POST',{email:$('email').value,password:$('password').value});$('password').value='';token=v.accessToken;sessionStorage.setItem('codebound-session',token);await enter();show('Signed in');}catch(e){show(e.message);}};
+action('logout',async()=>{token='';sessionStorage.removeItem('codebound-session');location.reload();});
+action('refresh',refresh);action('loadTools',async()=>{$('toolList').textContent=JSON.stringify((await api('/v1/tools/'+encodeURIComponent($('server').value))).tools,null,2);});
+const bindings=()=>$('bindings').value.split(',').map(s=>s.trim()).filter(Boolean),body=()=>({name:$('name').value,source_code:$('source').value,bindings:bindings()});
+action('save',async()=>{const v=await api('/v1/scripts','POST',body());await refresh();$('scripts').value=v.script_id;version=v.version;show(v);});
+action('load',async()=>{const v=await api('/v1/scripts/'+$('scripts').value);$('name').value=v.name;$('source').value=v.source_code;$('bindings').value=v.bindings.join(', ');version=v.version;show('Loaded version '+version);});
+action('update',async()=>{if(!version)throw Error('Load the selected script before editing');const v=await api('/v1/scripts/'+$('scripts').value,'PUT',{...body(),expected_version:version});version=v.version;show(v);});
+$('scripts').onchange=()=>{version=null;};
+action('delete',async()=>{show(await api('/v1/scripts/'+$('scripts').value,'DELETE'));await refresh();});
+action('run',async()=>{if(!$('server').value)throw Error('Create an MCP server in AnythingMCP first');show('Running…');show(await api('/v1/scripts/'+$('scripts').value+'/execute','POST',{server_id:$('server').value,parameters:JSON.parse($('parameters').value)}));});
+action('generate',async()=>{show('Generating…');const v=await api('/v1/generate','POST',{name:$('name').value,task:$('task').value,server_id:$('server').value,bindings:bindings()});await refresh();$('scripts').value=v.script_id;show(v);});
+if(token)enter().catch(e=>{show(e.message);sessionStorage.removeItem('codebound-session');token='';});
+</script></html>

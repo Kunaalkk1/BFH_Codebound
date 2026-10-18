@@ -1,0 +1,48 @@
+﻿name: codebound-kit
+services:
+  app:
+    image: ${ANYTHINGMCP_IMAGE:-helpcodeai/anythingmcp:latest}
+    platform: linux/amd64
+    container_name: codebound-kit-app
+    ports:
+      - "127.0.0.1:3100:3000"
+      - "127.0.0.1:4200:4000"
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://amcp:${POSTGRES_PASSWORD}@postgres:5432/anythingmcp
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      NEXT_PUBLIC_API_URL: http://localhost:4200
+      CORS_ORIGIN: http://localhost:3100
+      SERVER_URL: http://localhost:4200
+      FRONTEND_URL: http://localhost:3100
+      MCP_AUTH_MODE: legacy
+      MCP_ALLOW_ANONYMOUS: "false"
+      ALLOW_OPEN_REGISTRATION: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, --quiet, --spider, "http://localhost:4000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  postgres:
+    image: postgres:17-alpine
+    container_name: codebound-kit-postgres
+    environment:
+      POSTGRES_USER: amcp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: anythingmcp
+    volumes:
+      - kit_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U amcp -d anythingmcp]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+volumes:
+  kit_postgres_data:

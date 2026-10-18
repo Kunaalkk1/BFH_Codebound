@@ -1,0 +1,5 @@
+# Reuse the inspected official quickstart, its environment and existing volumes.
+name: ${COMPOSE_PROJECT_NAME:-amcp}
+include:
+  - path: ../anythingmcp/docker-compose.quickstart.yml
+    env_file: ../anythingmcp/.env

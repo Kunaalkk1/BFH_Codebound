@@ -1,0 +1,22 @@
+﻿name: codebound-kit-mocks
+services:
+  mocks:
+    container_name: codebound-kit-mocks
+    image: codebound-kit-mocks:local
+    environment:
+      DATA_DIR: /data
+    ports: !override
+      - "127.0.0.1:14101:4101"
+      - "127.0.0.1:14102:4102"
+      - "127.0.0.1:14103:4103"
+      - "127.0.0.1:14104:4104"
+      - "127.0.0.1:14180:4180"
+  outside:
+    container_name: codebound-kit-outside
+    image: codebound-kit-mocks:local
+    ports: !override
+      - "127.0.0.1:14199:4199"
+      - "127.0.0.1:14181:4181"
+networks:
+  codebound:
+    name: codebound-kit-mocks

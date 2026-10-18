@@ -1,0 +1,20 @@
+flowchart TB
+    User <-->|Compact answers| Claude[Claude Desktop]
+    Claude <-->|MCP stdio| Bridge[Python bridge - protected Alice key]
+    Bridge <-->|Authenticated MCP HTTP :4200| Gateway[AnythingMCP - isolated kit database\nWorkspace A / B and user roles]
+    Gateway -->|Published script tools / existing Supplier offer tool| API[Codebound FastAPI :8001]
+    API <--> Registry[(SQLite scripts, versions and audit\nExisting database preserved)]
+    Ollama[Local Ollama] -->|Python source text only| Registry
+    API -->|Task / code template - no business rows| Ollama
+    API -->|Source, parameters, authorized responses| Worker[Restricted Docker Python worker\nnetwork none - no host mounts - no credentials]
+    Worker -->|tools.call via bounded stdin/stdout IPC| Broker[Trusted broker\nWorkspace + user + connector binding\n64-call quota / byte and time limits]
+    Broker <-->|Same user's authenticated workspace MCP| Gateway
+    Gateway <-->|Connector-authenticated requests| ERP[Mock ERP :4101 - host :14101]
+    Gateway <-->|Connector-authenticated requests| Supplier[Mock Supplier :4102 - host :14102]
+    Gateway <-->|Connector-authenticated requests| Carrier[Mock Carrier :4103 - host :14103]
+    Gateway <-->|A only - authorized roles| Payroll[Mock Payroll :4104 - host :14104]
+    Worker -->|Compact JSON| API
+    API -->|Processed result before gateway response mapping| Gateway
+    Logs[Official request logs - host :14180 / :14181] --- ERP
+    Outside[Outside security target :4199 - host :14199\nNever reachable by worker]:::blocked
+    classDef blocked fill:#fee,stroke:#b22
