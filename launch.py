@@ -119,39 +119,46 @@ def docker():
     return executable
 
 
+def repair_image_config(config):
+    """Validate and migrate a known retired image without changing secrets."""
+    dependencies = json.loads((ROOT / 'dependencies.json').read_text())
+    original = config.read_bytes()
+    content = original.decode('utf-8-sig')
+    entries = dict(line.split('=', 1) for line in content.splitlines() if '=' in line and not line.startswith('#'))
+    keys = set(entries)
+    if not {'JWT_SECRET', 'ENCRYPTION_KEY', 'POSTGRES_PASSWORD', 'ANYTHINGMCP_IMAGE'} <= keys:
+        raise RuntimeError(f'Incomplete configuration: {config}. Restore its backup; secrets will not be replaced.')
+    if entries['ANYTHINGMCP_IMAGE'] in dependencies.get('anythingmcp-replaced-images', []):
+        replacement = dependencies['anythingmcp-image']
+        content = ''.join('ANYTHINGMCP_IMAGE=' + replacement + ('\r\n' if line.endswith('\r\n') else '\n')
+            if line.startswith('ANYTHINGMCP_IMAGE=') else line for line in content.splitlines(keepends=True))
+        backup = config.with_name('compose.env.before-image-repair-' + secrets.token_hex(6))
+        with backup.open('xb') as handle:
+            if os.name != 'nt':
+                os.chmod(backup, 0o600)
+            handle.write(original)
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(dir=config.parent, delete=False) as handle:
+                temporary = Path(handle.name)
+                if os.name != 'nt':
+                    os.chmod(temporary, 0o600)
+                handle.write(content.encode())
+            if config.read_bytes() != original:
+                raise RuntimeError('Host configuration changed during image repair; retry.')
+            os.replace(temporary, config)
+        finally:
+            if temporary:
+                temporary.unlink(missing_ok=True)
+        print('Repaired the unavailable AnythingMCP image reference; secrets preserved and original configuration backed up.')
+    return
+
+
 def prepare(executable):
     LOCAL.mkdir(parents=True, exist_ok=True)
     dependencies = json.loads((ROOT / 'dependencies.json').read_text())
     if ENV.exists():
-        original = ENV.read_bytes()
-        content = original.decode('utf-8-sig')
-        entries = dict(line.split('=', 1) for line in content.splitlines() if '=' in line and not line.startswith('#'))
-        keys = set(entries)
-        if not {'JWT_SECRET', 'ENCRYPTION_KEY', 'POSTGRES_PASSWORD', 'ANYTHINGMCP_IMAGE'} <= keys:
-            raise RuntimeError(f'Incomplete host configuration: {ENV}. Restore its backup; secrets will not be replaced.')
-        if entries['ANYTHINGMCP_IMAGE'] in dependencies.get('anythingmcp-replaced-images', []):
-            replacement = dependencies['anythingmcp-image']
-            content = ''.join('ANYTHINGMCP_IMAGE=' + replacement + ('\r\n' if line.endswith('\r\n') else '\n')
-                if line.startswith('ANYTHINGMCP_IMAGE=') else line for line in content.splitlines(keepends=True))
-            backup = ENV.with_name('compose.env.before-image-repair-' + secrets.token_hex(6))
-            with backup.open('xb') as handle:
-                if os.name != 'nt':
-                    os.chmod(backup, 0o600)
-                handle.write(original)
-            temporary = None
-            try:
-                with tempfile.NamedTemporaryFile(dir=LOCAL, delete=False) as handle:
-                    temporary = Path(handle.name)
-                    if os.name != 'nt':
-                        os.chmod(temporary, 0o600)
-                    handle.write(content.encode())
-                if ENV.read_bytes() != original:
-                    raise RuntimeError('Host configuration changed during image repair; retry.')
-                os.replace(temporary, ENV)
-            finally:
-                if temporary:
-                    temporary.unlink(missing_ok=True)
-            print('Repaired the unavailable AnythingMCP image reference; secrets preserved and original configuration backed up.')
+        repair_image_config(ENV)
         return
     volumes = subprocess.run([executable, 'volume', 'ls', '-q', '--filter', 'label=com.docker.compose.project=codebound-host'],
         check=True, capture_output=True, text=True).stdout.strip()

@@ -117,6 +117,7 @@ def prepare(executable):
         image = json.loads((ROOT/'dependencies.json').read_text())['anythingmcp-image']
         with config.open('a') as output:
             output.write('\nANYTHINGMCP_IMAGE='+image+'\n')
+    shared.repair_image_config(config)
     os.chmod(config, 0o600)
 
 
@@ -226,6 +227,7 @@ def main(args):
         if args.benchmark:
             return module('codebound.kit.benchmark')
         if not args.status:
+            prepare(executable)
             ollama()
             compose(executable, True, 'up', '-d', '--build')
             wait('http://127.0.0.1:14180/__health')

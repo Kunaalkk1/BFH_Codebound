@@ -51,6 +51,30 @@ def test_native_compose_has_linux_route_and_isolated_state(monkeypatch):
     assert demo_launch.ROOT/'docker/compose.host.yml' not in captured[0]
 
 
+@pytest.mark.parametrize('image', ['retired/default', 'operator/custom:v1'])
+def test_demo_prepare_repairs_only_retired_image_preserving_secrets(tmp_path, monkeypatch, image):
+    local = tmp_path/'kit'
+    local.mkdir()
+    config = local/'compose.env'
+    original = ('JWT_SECRET=keep-jwt\nENCRYPTION_KEY=keep-key\nPOSTGRES_PASSWORD=keep-db\n'
+                f'ANYTHINGMCP_IMAGE={image}\n# operator comment\n').encode()
+    config.write_bytes(original)
+    (tmp_path/'dependencies.json').write_text(json.dumps({
+        'anythingmcp-image': 'available/default', 'anythingmcp-replaced-images': ['retired/default']}))
+    monkeypatch.setattr(demo_launch, 'LOCAL', local)
+    monkeypatch.setattr(launch, 'ROOT', tmp_path)
+    monkeypatch.setattr(demo_launch, 'module', lambda *args: None)
+    demo_launch.prepare('unused-docker')
+    expected = original.replace(b'retired/default', b'available/default')
+    assert config.read_bytes() == expected
+    backups = list(local.glob('compose.env.before-image-repair-*'))
+    assert len(backups) == (image == 'retired/default')
+    if backups:
+        assert backups[0].read_bytes() == original
+    demo_launch.prepare('unused-docker')
+    assert config.read_bytes() == expected
+
+
 def test_kit_checkout_mismatch_is_preserved(tmp_path,monkeypatch):
     root=tmp_path/'repo';kit=root/'external/codebound-kit';kit.mkdir(parents=True)
     (kit/'custom.txt').write_text('keep operator changes')
