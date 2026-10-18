@@ -122,9 +122,9 @@ def prepare(executable):
 
 
 def setup(args):
+    shared.dependencies()
     node()
     fetch_kit()
-    shared.dependencies()
     if args.dependencies_only:
         print('Linux demo source and backend dependencies ready. Run python3 launch.py demo --setup to provision.')
         return

@@ -81,3 +81,33 @@ This explicitly selects demo Alice and exposes only the five reviewed tools unde
 ## Verification scope
 
 Linux-container tests exercise the default suite, Unix credentials and native launch paths. Ubuntu CI is configured for Python 3.11/3.13, real Docker isolation and native demo provisioning/start/reuse/stop plus official MUST checks. Its native demo job deliberately skips Ollama inference; it must not be read as a generation test. The Claude Linux desktop UI and every distribution/firewall combination are outside those tests.
+
+## Shell launchers and portable Python environments
+
+The `.sh` entry points work from any current directory and accept the same options as `launch.py`:
+
+```bash
+./setup.sh demo
+./launch.sh demo
+./launch/status.sh demo
+./launch/stop.sh demo
+./launch/test.sh demo
+```
+
+For backend dependencies only, use `./launch.sh --dependencies-only`.
+`./launch/demo.sh --status` is a shortcut for `./launch.sh demo --status`.
+The shell launcher searches for Python 3.11+ and prefers the local `.venv`.
+Set `CODEBOUND_PYTHON=/absolute/path/to/python3.11` to select an interpreter explicitly.
+Windows users keep using `launch.ps1` / `setup.ps1` or `python launch.py`.
+`launch.py` detects the current OS: Windows demo operations dispatch to PowerShell;
+Linux demo operations use native Python without requiring PowerShell. Host mode uses
+portable Python on all platforms. The shell files delegate to that shared logic.
+
+Dependencies install only into `.venv`, through its own `python -m pip`; activation
+is optional. To run another project script manually, use `.venv/bin/python script.py`
+on Linux, or `.venv\Scripts\python.exe script.py` on Windows.
+A virtual environment does not bundle a portable Python installation. When changing
+PCs or operating systems, install Python 3.11+ on the new machine, clone the source,
+and rerun dependency setup. Do not copy `.venv` or `.venv-claude`; both are ignored
+by Git. If an old or copied `.venv` exists, rename it first and let setup recreate it.
+The launcher reports incompatible environments without deleting them.
